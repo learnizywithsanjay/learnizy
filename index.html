@@ -531,26 +531,19 @@ var qqs=[], qidx=0, qans={}, qtint=null, qsec=0;
 auth.onAuthStateChanged(function(u) {
   if (u) {
     CU = u;
-    // Retry up to 5 times to get the user doc (it may not be written yet)
-    function loadUser(tries) {
-      db.collection('users').doc(u.uid).get()
-        .then(function(snap) {
-          if (snap.exists()) {
-            UD = snap.data();
-            showApp();
-          } else if (tries > 0) {
-            setTimeout(function(){ loadUser(tries-1); }, 500);
-          } else {
-            UD = {name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
-            showApp();
-          }
-        })
-        .catch(function(e) {
+    db.collection('users').doc(u.uid).get()
+      .then(function(snap) {
+        if (snap.exists()) {
+          UD = snap.data();
+        } else {
           UD = {name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
-          showApp();
-        });
-    }
-    loadUser(5);
+        }
+        showApp();
+      })
+      .catch(function() {
+        UD = {name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
+        showApp();
+      });
   } else {
     showAuth();
   }
@@ -641,18 +634,13 @@ function showApp() {
   document.getElementById('i-email').textContent=CU.email;
   document.getElementById('i-role').textContent=UD.role==='teacher'?'👨‍🏫 Teacher':'🎓 Student';
   document.getElementById('i-cls').textContent=UD.class||'—';
-  // Force reload role from Firestore to make sure we have latest data
-  db.collection('users').doc(CU.uid).get().then(function(snap){
-    if(snap.exists()){
-      UD = snap.data();
-      if(UD.role==='teacher'){
-        document.getElementById('ni-teacher').style.display='';
-        document.getElementById('i-role').textContent='👨‍🏫 Teacher';
-        loadTeacherStats();
-      }
-    }
-  });
-  if(UD.role==='teacher'){document.getElementById('ni-teacher').style.display='';loadTeacherStats();}
+  console.log('User role:', UD.role);
+  if(UD.role==='teacher'){
+    document.getElementById('ni-teacher').style.display='';
+    loadTeacherStats();
+  } else {
+    document.getElementById('ni-teacher').style.display='none';
+  }
   loadAnn(); loadQs(); loadLB(); loadPastRes();
 }
 
