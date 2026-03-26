@@ -464,6 +464,8 @@ input,textarea,select{font-family:'DM Sans',sans-serif;color:var(--tx)}
               <div><div style="font-size:10px;color:var(--tx3)">Name</div><div style="font-size:13px;margin-top:3px" id="i-name">—</div></div>
               <div><div style="font-size:10px;color:var(--tx3)">Email</div><div style="font-size:13px;margin-top:3px" id="i-email">—</div></div>
               <div><div style="font-size:10px;color:var(--tx3)">Role</div><div style="font-size:13px;margin-top:3px" id="i-role">—</div></div>
+              <div><div style="font-size:10px;color:var(--tx3)">Raw Firestore Role</div><div style="font-size:13px;margin-top:3px;color:var(--ac)" id="i-raw-role">loading...</div></div>
+              <div style="margin-top:10px"><button class="btn bp" style="font-size:11px;width:100%" onclick="forceTeacher()">🔄 Reload My Role</button></div>
               <div><div style="font-size:10px;color:var(--tx3)">Class</div><div style="font-size:13px;margin-top:3px" id="i-cls">—</div></div>
             </div>
           </div>
@@ -929,6 +931,33 @@ function loadStuTbl(){
   }).catch(function(){});
 }
 
+// ═══════════════════════════════════════
+// FORCE TEACHER RELOAD
+// ═══════════════════════════════════════
+function forceTeacher() {
+  if(!CU) { alert('Not logged in!'); return; }
+  document.getElementById('i-raw-role').textContent = 'Checking...';
+  db.collection('users').doc(CU.uid).get().then(function(snap) {
+    if(snap.exists()) {
+      var data = snap.data();
+      document.getElementById('i-raw-role').textContent = 'DB says: ' + data.role + ' | UID: ' + CU.uid.slice(0,8);
+      UD = data;
+      if(data.role === 'teacher') {
+        document.getElementById('ni-teacher').style.display = '';
+        document.getElementById('i-role').textContent = '👨‍🏫 Teacher';
+        alert('✅ Teacher Panel unlocked! Click the 👨‍🏫 icon in the sidebar!');
+        loadTeacherStats();
+      } else {
+        alert('Role in DB is: ' + data.role + '. UID: ' + CU.uid);
+      }
+    } else {
+      document.getElementById('i-raw-role').textContent = 'No document found! UID: ' + CU.uid;
+      alert('No user document found for UID: ' + CU.uid);
+    }
+  }).catch(function(e) {
+    alert('Error: ' + e.message);
+  });
+}
 // ═══════════════════════════════════════
 // XP
 // ═══════════════════════════════════════
