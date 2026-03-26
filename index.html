@@ -535,9 +535,14 @@ auth.onAuthStateChanged(function(u) {
     CU = u;
     db.collection('users').doc(u.uid).get()
       .then(function(snap) {
-        if (snap.exists) {
-          UD = snap.data();
-        } else {
+        try {
+          var data = snap.data();
+          if(data && data.role) {
+            UD = data;
+          } else {
+            UD = {name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
+          }
+        } catch(e) {
           UD = {name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
         }
         showApp();
@@ -938,21 +943,24 @@ function forceTeacher() {
   if(!CU) { alert('Not logged in!'); return; }
   document.getElementById('i-raw-role').textContent = 'Checking...';
   db.collection('users').doc(CU.uid).get().then(function(snap) {
-    if(snap.exists) {
+    try {
       var data = snap.data();
-      document.getElementById('i-raw-role').textContent = 'DB says: ' + data.role + ' | UID: ' + CU.uid.slice(0,8);
-      UD = data;
-      if(data.role === 'teacher') {
-        document.getElementById('ni-teacher').style.display = '';
-        document.getElementById('i-role').textContent = '👨‍🏫 Teacher';
-        alert('✅ Teacher Panel unlocked! Click the 👨‍🏫 icon in the sidebar!');
-        loadTeacherStats();
+      if(data && data.role) {
+        document.getElementById('i-raw-role').textContent = 'DB says: ' + data.role;
+        UD = data;
+        if(data.role === 'teacher') {
+          document.getElementById('ni-teacher').style.display = '';
+          document.getElementById('i-role').textContent = '👨‍🏫 Teacher';
+          alert('✅ Teacher Panel unlocked! Click the 👨‍🏫 icon in the sidebar!');
+          loadTeacherStats();
+        } else {
+          alert('Your role is: ' + data.role);
+        }
       } else {
-        alert('Role in DB is: ' + data.role + '. UID: ' + CU.uid);
+        alert('No data found. UID: ' + CU.uid);
       }
-    } else {
-      document.getElementById('i-raw-role').textContent = 'No document found! UID: ' + CU.uid;
-      alert('No user document found for UID: ' + CU.uid);
+    } catch(e) {
+      alert('Error reading data: ' + e.message + ' UID: ' + CU.uid);
     }
   }).catch(function(e) {
     alert('Error: ' + e.message);
