@@ -641,6 +641,17 @@ function showApp() {
   document.getElementById('i-email').textContent=CU.email;
   document.getElementById('i-role').textContent=UD.role==='teacher'?'👨‍🏫 Teacher':'🎓 Student';
   document.getElementById('i-cls').textContent=UD.class||'—';
+  // Force reload role from Firestore to make sure we have latest data
+  db.collection('users').doc(CU.uid).get().then(function(snap){
+    if(snap.exists()){
+      UD = snap.data();
+      if(UD.role==='teacher'){
+        document.getElementById('ni-teacher').style.display='';
+        document.getElementById('i-role').textContent='👨‍🏫 Teacher';
+        loadTeacherStats();
+      }
+    }
+  });
   if(UD.role==='teacher'){document.getElementById('ni-teacher').style.display='';loadTeacherStats();}
   loadAnn(); loadQs(); loadLB(); loadPastRes();
 }
