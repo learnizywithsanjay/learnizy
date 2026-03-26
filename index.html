@@ -68,7 +68,7 @@ input,textarea,select{font-family:'DM Sans',sans-serif;color:var(--tx)}
 .sidebar.open .nlbl{display:block}
 .sbot{margin-top:auto;width:100%}
 
-.content{flex:1;overflow-y:auto;padding:20px}
+.content{flex:1;overflow-y:auto;padding:20px;padding-bottom:90px}
 .content::-webkit-scrollbar{width:4px}
 .content::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:999px}
 .page{display:none;animation:fi .2s ease}
@@ -397,6 +397,13 @@ input,textarea,select{font-family:'DM Sans',sans-serif;color:var(--tx)}
             <div style="font-size:13px;font-weight:600;margin-bottom:2px">Upload Notes / PDF</div>
             <div style="font-size:11px;color:var(--tx2)">Drag & drop or click · Max 20MB</div>
             <input type="file" id="pf" accept=".pdf,.jpg,.png,.doc,.docx" style="display:none" onchange="uploadF(this.files[0])">
+          </div>
+          <div class="card" style="margin-top:10px">
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px">📎 Or add Google Drive / YouTube link</div>
+            <div style="font-size:11px;color:var(--tx2);margin-bottom:8px">Upload PDF to Google Drive → Share → Copy link → Paste below</div>
+            <input class="fi" id="ext-link" placeholder="Paste Google Drive or YouTube link here..." style="margin-bottom:8px">
+            <button class="btn bp" style="font-size:12px;width:100%" onclick="saveExtLink()">💾 Save Link</button>
+            <div style="font-size:11px;color:#51cf66;margin-top:6px;display:none" id="ext-ok">✅ Link saved!</div>
           </div>
           <div class="uppb" id="upb"><div class="uppbf" id="upbf"></div></div>
           <div style="font-size:11px;color:var(--tx2);margin-top:4px" id="upst"></div>
@@ -915,12 +922,94 @@ function saveQ(){
 function uploadF(f){
   if(!f||!CU){toast('Select a file.');return;}
   var t=document.getElementById('ut').value.trim()||f.name;
+  var subj=document.getElementById('us').value;
+  var cls=document.getElementById('uc').value;
+  var ch=document.getElementById('uch').value||'General';
   var pb=document.getElementById('upb'),pbf=document.getElementById('upbf'),st=document.getElementById('upst');
-  pb.style.display='block'; st.textContent='Uploading...';
-  var task=stor.ref('content/'+CU.uid+'/'+Date.now()+'_'+f.name).put(f);
-  task.on('state_changed',function(s){var p=Math.round(s.bytesTransferred/s.totalBytes*100);pbf.style.width=p+'%';st.textContent='Uploading '+p+'%';},function(e){st.textContent='❌ '+e.message;},function(){task.snapshot.ref.getDownloadURL().then(function(url){return db.collection('content').add({title:t,subject:document.getElementById('us').value,class:document.getElementById('uc').value,chapter:document.getElementById('uch').value||'General',fileUrl:url,type:f.type.includes('video')?'video':'pdf',uploadedBy:CU.uid,uploaderName:UD.name||'Teacher',timestamp:firebase.firestore.FieldValue.serverTimestamp()});}).then(function(){st.textContent='✅ Uploaded: '+t;toast('✅ '+t+' uploaded!');loadTeacherStats();document.getElementById('ut').value='';});});
+  pb.style.display='block';
+  st.textContent='Uploading... please wait';
+  st.style.color='var(--ac)';
+
+  // Check file size
+  if(f.size > 20*1024*1024){
+    st.textContent='❌ File too large. Max 20MB.';
+    st.style.color='#ff6b6b';
+    pb.style.display='none';
+    return;
+  }
+
+  var storRef = stor.ref('content/'+Date.now()+'_'+f.name.replace(/[^a-zA-Z0-9._]/g,'_'));
+  var task = storRef.put(f);
+
+  task.on('state_changed',
+    function(snapshot){
+      var p=Math.round(snapshot.bytesTransferred/snapshot.totalBytes*100);
+      pbf.style.width=p+'%';
+      st.textContent='Uploading... '+p+'%';
+    },
+    function(error){
+      console.error('Upload error:',error);
+      st.textContent='❌ Upload failed: '+error.message;
+      st.style.color='#ff6b6b';
+      pb.style.display='none';
+
+      // If storage error, save as external link instead
+      if(error.code==='storage/unauthorized'){
+        st.textContent='⚠️ Storage not set up. Use Google Drive link instead.';
+      }
+    },
+    function(){
+      task.snapshot.ref.getDownloadURL().then(function(url){
+        return db.collection('content').add({
+          title:t, subject:subj, class:cls, chapter:ch,
+          fileUrl:url, type:f.type&&f.type.includes('video')?'video':'pdf',
+          uploadedBy:CU.uid, uploaderName:UD.name||'Teacher',
+          timestamp:firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }).then(function(){
+        st.textContent='✅ Uploaded: '+t;
+        st.style.color='#51cf66';
+        pbf.style.width='100%';
+        toast('✅ '+t+' uploaded successfully!');
+        loadTeacherStats();
+        document.getElementById('ut').value='';
+        document.getElementById('uch').value='';
+      }).catch(function(e){
+        st.textContent='❌ Error saving: '+e.message;
+        st.style.color='#ff6b6b';
+      });
+    }
+  );
 }
 function dropF(e){e.preventDefault();var f=e.dataTransfer.files[0];if(f)uploadF(f);}
+
+function saveExtLink(){
+  var url=document.getElementById('ext-link').value.trim();
+  var t=document.getElementById('ut').value.trim()||'Shared Resource';
+  var subj=document.getElementById('us').value;
+  var cls=document.getElementById('uc').value;
+  var ch=document.getElementById('uch').value||'General';
+  if(!url){toast('Please paste a link first.');return;}
+  var isVideo=url.includes('youtube')||url.includes('youtu.be')||url.includes('vimeo');
+  // Convert Google Drive view link to direct link
+  if(url.includes('drive.google.com/file')){
+    var match=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if(match) url='https://drive.google.com/file/d/'+match[1]+'/preview';
+  }
+  db.collection('content').add({
+    title:t, subject:subj, class:cls, chapter:ch,
+    fileUrl:url, type:isVideo?'video':'pdf',
+    uploadedBy:CU.uid, uploaderName:UD.name||'Teacher',
+    timestamp:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    document.getElementById('ext-ok').style.display='block';
+    document.getElementById('ext-link').value='';
+    document.getElementById('ut').value='';
+    toast('✅ Link saved for students!');
+    loadTeacherStats();
+    setTimeout(function(){document.getElementById('ext-ok').style.display='none';},3000);
+  }).catch(function(e){toast('Error: '+e.message);});
+}
 
 function loadTeacherStats(){
   Promise.all([db.collection('users').where('role','==','student').get(),db.collection('questions').get(),db.collection('results').get(),db.collection('announcements').get()])
