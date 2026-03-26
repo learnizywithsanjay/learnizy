@@ -535,7 +535,7 @@ auth.onAuthStateChanged(function(u) {
     CU = u;
     db.collection('users').doc(u.uid).get()
       .then(function(snap) {
-        if (snap.exists()) {
+        if (snap.exists) {
           UD = snap.data();
         } else {
           UD = {name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
@@ -938,7 +938,7 @@ function forceTeacher() {
   if(!CU) { alert('Not logged in!'); return; }
   document.getElementById('i-raw-role').textContent = 'Checking...';
   db.collection('users').doc(CU.uid).get().then(function(snap) {
-    if(snap.exists()) {
+    if(snap.exists) {
       var data = snap.data();
       document.getElementById('i-raw-role').textContent = 'DB says: ' + data.role + ' | UID: ' + CU.uid.slice(0,8);
       UD = data;
