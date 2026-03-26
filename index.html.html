@@ -531,15 +531,26 @@ var qqs=[], qidx=0, qans={}, qtint=null, qsec=0;
 auth.onAuthStateChanged(function(u) {
   if (u) {
     CU = u;
-    db.collection('users').doc(u.uid).get()
-      .then(function(snap) {
-        UD = snap.exists() ? snap.data() : {name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
-        showApp();
-      })
-      .catch(function(e) {
-        UD = {name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
-        showApp();
-      });
+    // Retry up to 5 times to get the user doc (it may not be written yet)
+    function loadUser(tries) {
+      db.collection('users').doc(u.uid).get()
+        .then(function(snap) {
+          if (snap.exists()) {
+            UD = snap.data();
+            showApp();
+          } else if (tries > 0) {
+            setTimeout(function(){ loadUser(tries-1); }, 500);
+          } else {
+            UD = {name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
+            showApp();
+          }
+        })
+        .catch(function(e) {
+          UD = {name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
+          showApp();
+        });
+    }
+    loadUser(5);
   } else {
     showAuth();
   }
@@ -563,7 +574,8 @@ function setRole(r) {
   role=r;
   document.getElementById('r-stu').className='rbtn'+(r==='student'?' on':'');
   document.getElementById('r-tea').className='rbtn'+(r==='teacher'?' on':'');
-  document.getElementById('cls-wrap').style.display=r==='student'?'':'none';
+  var cw=document.getElementById('cls-wrap');
+  if(cw) cw.style.display=r==='student'?'':'none';
 }
 
 function doLogin() {
@@ -585,6 +597,7 @@ function doSignup() {
   var c=document.getElementById('s-cls').value;
   if(!n||!e||!p){showMsg('Please fill all fields.','err');return;}
   if(role==='student'&&!c){showMsg('Please select your class.','err');return;}
+  // Teachers don't need class
   if(p.length<6){showMsg('Password must be at least 6 characters.','err');return;}
   var btn=document.getElementById('signup-btn');
   btn.disabled=true; btn.textContent='Creating account...';
