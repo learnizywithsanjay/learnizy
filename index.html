@@ -920,67 +920,79 @@ function saveQ(){
 }
 
 function uploadF(f){
-  if(!f||!CU){toast('Select a file.');return;}
+  if(!f||!CU){toast('Please select a file first.');return;}
   var t=document.getElementById('ut').value.trim()||f.name;
   var subj=document.getElementById('us').value;
   var cls=document.getElementById('uc').value;
   var ch=document.getElementById('uch').value||'General';
   var pb=document.getElementById('upb'),pbf=document.getElementById('upbf'),st=document.getElementById('upst');
+
+  if(f.size>20*1024*1024){st.textContent='❌ File too large. Max 20MB.';return;}
+
   pb.style.display='block';
-  st.textContent='Uploading... please wait';
+  pbf.style.width='0%';
+  st.textContent='Starting upload...';
   st.style.color='var(--ac)';
 
-  // Check file size
-  if(f.size > 20*1024*1024){
-    st.textContent='❌ File too large. Max 20MB.';
+  try {
+    var fileName = f.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    var storRef = stor.ref().child('content').child(Date.now()+'_'+fileName);
+    var task = storRef.put(f);
+
+    task.on('state_changed',
+      function(snapshot){
+        var p=Math.round(snapshot.bytesTransferred/snapshot.totalBytes*100);
+        pbf.style.width=p+'%';
+        st.textContent='Uploading... '+p+'%';
+      },
+      function(error){
+        pb.style.display='none';
+        st.style.color='#ff6b6b';
+        if(error.code==='storage/unauthorized'){
+          st.textContent='❌ Permission denied. Fix Storage rules in Firebase Console.';
+        } else if(error.code==='storage/canceled'){
+          st.textContent='❌ Upload cancelled.';
+        } else {
+          st.textContent='❌ Error: '+error.message;
+        }
+        toast('Upload failed: '+error.code);
+      },
+      function(){
+        task.snapshot.ref.getDownloadURL()
+          .then(function(url){
+            return db.collection('content').add({
+              title:t, subject:subj, class:cls, chapter:ch,
+              fileUrl:url,
+              type:(f.type&&f.type.includes('video'))?'video':'pdf',
+              uploadedBy:CU.uid,
+              uploaderName:UD.name||'Teacher',
+              timestamp:firebase.firestore.FieldValue.serverTimestamp()
+            });
+          })
+          .then(function(){
+            st.textContent='✅ '+t+' uploaded successfully!';
+            st.style.color='#51cf66';
+            pbf.style.width='100%';
+            toast('✅ '+t+' uploaded!');
+            loadTeacherStats();
+            document.getElementById('ut').value='';
+            document.getElementById('uch').value='';
+            document.getElementById('pf').value='';
+          })
+          .catch(function(e){
+            st.textContent='❌ Save error: '+e.message;
+            st.style.color='#ff6b6b';
+          });
+      }
+    );
+  } catch(e) {
+    st.textContent='❌ Storage error: '+e.message+'. Please fix Firebase Storage rules.';
     st.style.color='#ff6b6b';
     pb.style.display='none';
-    return;
+    toast('Storage not configured properly.');
   }
-
-  var storRef = stor.ref('content/'+Date.now()+'_'+f.name.replace(/[^a-zA-Z0-9._]/g,'_'));
-  var task = storRef.put(f);
-
-  task.on('state_changed',
-    function(snapshot){
-      var p=Math.round(snapshot.bytesTransferred/snapshot.totalBytes*100);
-      pbf.style.width=p+'%';
-      st.textContent='Uploading... '+p+'%';
-    },
-    function(error){
-      console.error('Upload error:',error);
-      st.textContent='❌ Upload failed: '+error.message;
-      st.style.color='#ff6b6b';
-      pb.style.display='none';
-
-      // If storage error, save as external link instead
-      if(error.code==='storage/unauthorized'){
-        st.textContent='⚠️ Storage not set up. Use Google Drive link instead.';
-      }
-    },
-    function(){
-      task.snapshot.ref.getDownloadURL().then(function(url){
-        return db.collection('content').add({
-          title:t, subject:subj, class:cls, chapter:ch,
-          fileUrl:url, type:f.type&&f.type.includes('video')?'video':'pdf',
-          uploadedBy:CU.uid, uploaderName:UD.name||'Teacher',
-          timestamp:firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }).then(function(){
-        st.textContent='✅ Uploaded: '+t;
-        st.style.color='#51cf66';
-        pbf.style.width='100%';
-        toast('✅ '+t+' uploaded successfully!');
-        loadTeacherStats();
-        document.getElementById('ut').value='';
-        document.getElementById('uch').value='';
-      }).catch(function(e){
-        st.textContent='❌ Error saving: '+e.message;
-        st.style.color='#ff6b6b';
-      });
-    }
-  );
 }
+
 function dropF(e){e.preventDefault();var f=e.dataTransfer.files[0];if(f)uploadF(f);}
 
 function saveExtLink(){
