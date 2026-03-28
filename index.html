@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Learnizy – Smart Learning for Class 6–12 & NEET</title>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyB8fsekkb7nHleIoCClJcL9tflInvcKp0c",
+  authDomain:"learnizy-87687.firebaseapp.com",
+  projectId:"learnizy-87687",
+  storageBucket:"learnizy-87687.firebasestorage.app",
+  messagingSenderId:"262074231303",
+  appId:"1:262074231303:web:6b1b79703c9ddb5f8a18a2"
+});
+var auth=firebase.auth(), db=firebase.firestore();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f14;
+  --bg2: #13161e;
+  --bg3: #1a1e2a;
+  --bg4: #21263a;
+  --surface: #1e2235;
+  --surface2: #252b40;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #f0f2f8;
+  --text2: #9ba3c4;
+  --text3: #5c6380;
+  --accent: #4f7dff;
+  --accent2: #7c5cff;
+  --accent-glow: rgba(79,125,255,0.18);
+
+  --phy: #ff6b6b; --phy-bg: rgba(255,107,107,0.1); --phy-border: rgba(255,107,107,0.2);
+  --che: #ffa94d; --che-bg: rgba(255,169,77,0.1); --che-border: rgba(255,169,77,0.2);
+  --bio: #51cf66; --bio-bg: rgba(81,207,102,0.1); --bio-border: rgba(81,207,102,0.2);
+  --mat: #4dabf7; --mat-bg: rgba(77,171,247,0.1); --mat-border: rgba(77,171,247,0.2);
+
+  --r4: 4px; --r8: 8px; --r12: 12px; --r16: 16px; --r20: 20px; --r999: 999px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --ff: 'Sora', sans-serif;
+  --ff2: 'DM Sans', sans-serif;
+}
+.light {
+  --bg: #f4f6fc; --bg2: #eaecf5; --bg3: #e0e3f0; --bg4: #d5d9ec;
+  --surface: #ffffff; --surface2: #f8f9fe;
+  --border: rgba(0,0,0,0.07); --border2: rgba(0,0,0,0.12);
+  --text: #0d0f1a; --text2: #454d6e; --text3: #8a92b0;
+  --accent-glow: rgba(79,125,255,0.1);
+  --phy-bg: rgba(255,107,107,0.08); --che-bg: rgba(255,169,77,0.08);
+  --bio-bg: rgba(81,207,102,0.08); --mat-bg: rgba(77,171,247,0.08);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;font-family:var(--ff);background:var(--bg);color:var(--text)}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--ff);border:none;background:none;color:inherit}
+input,textarea,select{font-family:var(--ff2);color:inherit}
+
+/* ─── LAYOUT ─── */
+#app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:72px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:0 0 16px;transition:width .3s;z-index:20;flex-shrink:0}
+.sidebar.expanded{width:240px}
+.sidebar .logo-wrap{width:100%;padding:18px 0;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border);margin-bottom:12px;cursor:pointer}
+.sidebar.expanded .logo-wrap{padding:18px 16px;justify-content:flex-start;gap:10px}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.logo-text{display:none;font-size:17px;font-weight:700;letter-spacing:-0.3px}
+.sidebar.expanded .logo-text{display:block}
+.logo-text span{color:var(--accent)}
+.nav-item{width:100%;display:flex;align-items:center;justify-content:center;padding:12px 0;position:relative;transition:all .2s;border-radius:0;gap:12px;font-size:13px;font-weight:500;color:var(--text3)}
+.sidebar.expanded .nav-item{justify-content:flex-start;padding:10px 16px}
+.nav-item:hover{color:var(--text2);background:rgba(255,255,255,0.03)}
+.nav-item.active{color:var(--accent)}
+.nav-item .icon{font-size:20px;flex-shrink:0;width:24px;text-align:center}
+.nav-label{display:none;white-space:nowrap}
+.sidebar.expanded .nav-label{display:block}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);height:60%;width:3px;background:var(--accent);border-radius:0 3px 3px 0}
+.sidebar .bottom{margin-top:auto;width:100%;display:flex;flex-direction:column;align-items:center;gap:4px}
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.topbar{height:60px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.topbar .breadcrumb{font-size:13px;color:var(--text2);flex:1}
+.topbar .breadcrumb b{color:var(--text);font-weight:600}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r999);padding:7px 14px;font-size:13px;color:var(--text2);width:220px}
+.search-box input{background:none;border:none;outline:none;font-size:13px;color:var(--text);width:100%}
+.search-box input::placeholder{color:var(--text3)}
+.topbar-btns{display:flex;gap:8px;align-items:center}
+.icon-btn{width:36px;height:36px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s}
+.icon-btn:hover{background:var(--surface);border-color:var(--border2)}
+.content{flex:1;overflow-y:auto;padding:24px}
+.content::-webkit-scrollbar{width:5px}
+.content::-webkit-scrollbar-track{background:transparent}
+.content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:999px}
+
+/* ─── PAGES ─── */
+.page{display:none;animation:fadeIn .25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ─── TYPOGRAPHY ─── */
+.page-title{font-size:22px;font-weight:700;letter-spacing:-0.5px;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text2);margin-bottom:20px}
+.section-title{font-size:14px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px}
+
+/* ─── CARDS ─── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r16);padding:18px}
+.card-sm{padding:14px}
+.card:hover{border-color:var(--border2)}
+
+/* ─── GRIDS ─── */
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:700px){.grid3,.grid4{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+
+/* ─── SUBJECT CARDS ─── */
+.subj-card{border-radius:var(--r16);padding:18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;border:1px solid transparent}
+.subj-card:hover{transform:translateY(-2px)}
+.subj-card .subj-icon{font-size:28px;margin-bottom:10px}
+.subj-card .subj-name{font-size:15px;font-weight:700}
+.subj-card .subj-count{font-size:12px;margin-top:4px;opacity:.7}
+.subj-card .subj-badge{position:absolute;top:12px;right:12px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:var(--r999);background:rgba(255,255,255,0.15)}
+.subj-card.phy{background:var(--phy-bg);border-color:var(--phy-border);color:var(--phy)}
+.subj-card.che{background:var(--che-bg);border-color:var(--che-border);color:var(--che)}
+.subj-card.bio{background:var(--bio-bg);border-color:var(--bio-border);color:var(--bio)}
+.subj-card.mat{background:var(--mat-bg);border-color:var(--mat-border);color:var(--mat)}
+
+/* ─── STAT CARDS ─── */
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r16);padding:16px 18px}
+.stat-num{font-size:26px;font-weight:700;letter-spacing:-0.5px}
+.stat-label{font-size:12px;color:var(--text2);margin-top:3px}
+.stat-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;border-radius:var(--r999);margin-top:8px}
+.stat-badge.up{background:rgba(81,207,102,0.15);color:#51cf66}
+.stat-badge.down{background:rgba(255,107,107,0.15);color:#ff6b6b}
+
+/* ─── PROGRESS ─── */
+.prog-bar{height:6px;background:var(--bg3);border-radius:999px;overflow:hidden;margin-top:8px}
+.prog-fill{height:100%;border-radius:999px;transition:width .8s ease}
+.prog-fill.phy{background:var(--phy)}
+.prog-fill.che{background:var(--che)}
+.prog-fill.bio{background:var(--bio)}
+.prog-fill.mat{background:var(--mat)}
+.prog-fill.accent{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+/* ─── BUTTONS ─── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--r999);font-size:13px;font-weight:600;transition:all .2s;cursor:pointer;font-family:var(--ff)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#3d6cf0;transform:translateY(-1px)}
+.btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--surface);color:var(--text)}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-xs{padding:5px 10px;font-size:11px}
+
+/* ─── BADGES ─── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:var(--r999);font-size:11px;font-weight:600}
+.badge-easy{background:rgba(81,207,102,0.15);color:#51cf66}
+.badge-medium{background:rgba(255,193,7,0.15);color:#ffc107}
+.badge-hard{background:rgba(255,107,107,0.15);color:#ff6b6b}
+.badge-neet{background:rgba(79,125,255,0.15);color:var(--accent)}
+.badge-free{background:rgba(81,207,102,0.15);color:#51cf66}
+.badge-premium{background:linear-gradient(135deg,rgba(255,165,0,0.2),rgba(255,100,50,0.2));color:#ffa500;border:1px solid rgba(255,165,0,0.3)}
+
+/* ─── TABS ─── */
+.tabs{display:flex;gap:4px;background:var(--bg3);border-radius:var(--r999);padding:4px;margin-bottom:20px}
+.tab{flex:1;padding:8px 14px;border-radius:var(--r999);font-size:13px;font-weight:500;color:var(--text2);text-align:center;cursor:pointer;transition:all .2s}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+
+/* ─── CHAPTER LIST ─── */
+.chapter-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r12);margin-bottom:8px;cursor:pointer;transition:all .2s}
+.chapter-item:hover{border-color:var(--border2);background:var(--surface2)}
+.chapter-num{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.chapter-info{flex:1}
+.chapter-name{font-size:14px;font-weight:600}
+.chapter-meta{font-size:12px;color:var(--text2);margin-top:2px}
+.chapter-prog{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px}
+
+/* ─── VIDEO PLAYER ─── */
+.video-thumb{position:relative;border-radius:var(--r12);overflow:hidden;background:var(--bg3);cursor:pointer}
+.video-thumb img,.video-thumb .thumb-bg{width:100%;aspect-ratio:16/9;object-fit:cover;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bg3),var(--bg4))}
+.play-btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:rgba(79,125,255,0.9);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;transition:all .2s}
+.video-thumb:hover .play-btn{transform:translate(-50%,-50%) scale(1.1)}
+.video-duration{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;font-size:11px;padding:2px 7px;border-radius:var(--r4)}
+
+/* ─── QUIZ / QUESTION ─── */
+.question-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r16);padding:20px;margin-bottom:14px}
+.q-text{font-size:15px;font-weight:500;line-height:1.6;margin-bottom:16px;font-family:var(--ff2)}
+.option{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r12);border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .2s;font-size:14px;font-family:var(--ff2)}
+.option:hover{border-color:var(--accent);background:var(--accent-glow)}
+.option.selected{border-color:var(--accent);background:var(--accent-glow);color:var(--accent)}
+.option.correct{border-color:#51cf66;background:rgba(81,207,102,0.1);color:#51cf66}
+.option.wrong{border-color:#ff6b6b;background:rgba(255,107,107,0.1);color:#ff6b6b}
+.option-key{width:28px;height:28px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;border:1px solid var(--border)}
+.solution-box{background:rgba(81,207,102,0.08);border:1px solid rgba(81,207,102,0.2);border-radius:var(--r12);padding:14px;margin-top:12px;font-size:13px;font-family:var(--ff2);color:var(--text2);line-height:1.6}
+
+/* ─── TIMER ─── */
+.timer-ring{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.timer-text{position:absolute;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ─── LEADERBOARD ─── */
+.lb-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r12);margin-bottom:6px;background:var(--surface);border:1px solid var(--border)}
+.lb-rank{font-size:14px;font-weight:700;width:28px;text-align:center}
+.lb-rank.gold{color:#ffd700}
+.lb-rank.silver{color:#c0c0c0}
+.lb-rank.bronze{color:#cd7f32}
+.lb-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.lb-name{flex:1;font-size:14px;font-weight:500}
+.lb-score{font-size:13px;font-weight:600;color:var(--accent)}
+
+/* ─── ANALYTICS ─── */
+.donut-wrap{position:relative;display:flex;align-items:center;justify-content:center}
+.donut-center{position:absolute;text-align:center}
+.donut-pct{font-size:22px;font-weight:700}
+.donut-sub{font-size:11px;color:var(--text2)}
+
+/* ─── NOTIFICATION BADGE ─── */
+.notif-dot{position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#ff6b6b;border:2px solid var(--bg2)}
+
+/* ─── AI CHAT ─── */
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 160px)}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.chat-messages::-webkit-scrollbar{width:4px}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:999px}
+.msg{max-width:80%;padding:12px 16px;border-radius:var(--r16);font-size:14px;font-family:var(--ff2);line-height:1.6}
+.msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.msg.ai{align-self:flex-start;background:var(--surface2);border:1px solid var(--border);border-bottom-left-radius:4px}
+.msg.ai .ai-label{font-size:10px;color:var(--accent);font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.chat-input-wrap{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;background:var(--bg2)}
+.chat-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--r999);padding:11px 16px;font-size:14px;color:var(--text);outline:none}
+.chat-input:focus{border-color:var(--accent)}
+.chat-input::placeholder{color:var(--text3)}
+
+/* ─── TEACHER PANEL ─── */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--r16);padding:32px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-glow)}
+.upload-icon{font-size:36px;margin-bottom:10px}
+.upload-title{font-size:15px;font-weight:600;margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--text2)}
+
+/* ─── CLASS SELECTOR ─── */
+.class-pill{display:inline-flex;align-items:center;padding:6px 14px;border-radius:var(--r999);border:1px solid var(--border);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;margin:3px}
+.class-pill:hover{border-color:var(--border2);background:var(--surface)}
+.class-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ─── MODAL ─── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r20);padding:24px;width:480px;max-width:95%;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:16px}
+
+/* ─── MOBILE NAV ─── */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);z-index:50;padding:8px 0 env(safe-area-inset-bottom)}
+.mobile-nav-items{display:flex;justify-content:space-around}
+.mnav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px;font-size:10px;color:var(--text3);cursor:pointer;transition:color .2s}
+.mnav-item.active{color:var(--accent)}
+.mnav-item .micon{font-size:22px}
+
+@media(max-width:640px){
+  .sidebar{display:none}
+  .mobile-nav{display:block}
+  .content{padding:16px;padding-bottom:80px}
+  .grid4{grid-template-columns:repeat(2,1fr)}
+  .grid3{grid-template-columns:repeat(2,1fr)}
+  .search-box{display:none}
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:999px}
+
+/* ─── SPECIAL ─── */
+.glow-dot{width:8px;height:8px;border-radius:50%;background:#51cf66;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
+.streak-fire{font-size:28px;filter:drop-shadow(0 0 8px #ff6b00)}
+.xp-bar-wrap{background:var(--bg3);border-radius:999px;height:8px;overflow:hidden;margin-top:6px;position:relative}
+.xp-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px;transition:width 1s ease}
+
+/* form inputs */
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;color:var(--text2);margin-bottom:5px;display:block;font-weight:500}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);padding:10px 12px;font-size:13px;color:var(--text);outline:none;transition:border .2s}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--text3)}
+
+.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}.flex-1{flex:1}
+.mt-4{margin-top:4px}.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}
+.mb-4{margin-bottom:4px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}
+.text-sm{font-size:13px}.text-xs{font-size:11px}.text-2{color:var(--text2)}.text-3{color:var(--text3)}
+.fw-600{font-weight:600}.fw-700{font-weight:700}
+
+/* ── AUTH SCREEN ── */
+#auth-screen{position:fixed;inset:0;background:#0d0f14;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+#auth-screen.off{display:none}
+.acard{background:#1e2235;border:1px solid rgba(255,255,255,.13);border-radius:20px;padding:36px;width:100%;max-width:400px}
+.alogo{text-align:center;margin-bottom:24px}
+.alogo-ico{width:52px;height:52px;background:linear-gradient(135deg,#4f7dff,#7c5cff);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:8px}
+.alogo-name{font-size:24px;font-weight:700;color:#f0f2f8}
+.alogo-name span{color:#4f7dff}
+.atabs{display:flex;background:#1a1e2a;border-radius:999px;padding:4px;margin-bottom:22px}
+.atab{flex:1;padding:9px;text-align:center;border-radius:999px;cursor:pointer;font-size:13px;font-weight:600;color:#9ba3c4;transition:.2s}
+.atab.on{background:#1e2235;color:#f0f2f8}
+.amsg{padding:10px 13px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none}
+.amsg.err{background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.25);color:#ff6b6b}
+.amsg.ok{background:rgba(80,200,80,.12);border:1px solid rgba(80,200,80,.25);color:#51cf66}
+.amsg.info{background:rgba(79,125,255,.1);border:1px solid rgba(79,125,255,.2);color:#4f7dff}
+.afl{font-size:12px;color:#9ba3c4;margin-bottom:5px;display:block;font-weight:500}
+.afi{width:100%;background:#1a1e2a;border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:11px 13px;font-size:14px;color:#f0f2f8;outline:none;margin-bottom:12px;font-family:'Sora',sans-serif}
+.afi:focus{border-color:#4f7dff}
+.afi::placeholder{color:#5c6380}
+.arole{display:flex;gap:8px;margin-bottom:14px}
+.arbtn{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.13);font-size:13px;font-weight:600;cursor:pointer;background:none;color:#9ba3c4;transition:.2s;font-family:'Sora',sans-serif}
+.arbtn.on{border-color:#4f7dff;background:rgba(79,125,255,.15);color:#4f7dff}
+.abtn{width:100%;padding:13px;border-radius:999px;background:linear-gradient(135deg,#4f7dff,#7c5cff);color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:'Sora',sans-serif;transition:opacity .2s}
+.abtn:hover{opacity:.9}
+.abtn:disabled{opacity:.5;cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="acard">
+    <div class="alogo">
+      <div class="alogo-ico">⚡</div>
+      <div class="alogo-name">Learn<span>izy</span></div>
+    </div>
+    <div id="amsg" class="amsg"></div>
+    <div class="atabs">
+      <div class="atab on" id="atab-l" onclick="switchAuthTab('login')">Login</div>
+      <div class="atab" id="atab-s" onclick="switchAuthTab('signup')">Sign Up</div>
+    </div>
+    <div id="sec-login">
+      <label class="afl">Email</label>
+      <input class="afi" id="l-email" type="email" placeholder="you@email.com">
+      <label class="afl">Password</label>
+      <input class="afi" id="l-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="abtn" id="login-btn" onclick="doLogin()">Login →</button>
+    </div>
+    <div id="sec-signup" style="display:none">
+      <label class="afl">I am a</label>
+      <div class="arole">
+        <button class="arbtn on" id="r-stu" onclick="setRole('student')">🎓 Student</button>
+        <button class="arbtn" id="r-tea" onclick="setRole('teacher')">👨‍🏫 Teacher</button>
+      </div>
+      <label class="afl">Full Name</label>
+      <input class="afi" id="s-name" placeholder="Your full name">
+      <label class="afl">Email</label>
+      <input class="afi" id="s-email" type="email" placeholder="you@email.com">
+      <div id="cls-wrap">
+        <label class="afl">Class</label>
+        <select class="afi" id="s-cls">
+          <option value="">Select class</option>
+          <option>Class 6</option><option>Class 7</option><option>Class 8</option>
+          <option>Class 9</option><option>Class 10</option><option>Class 11</option><option>Class 12</option>
+        </select>
+      </div>
+      <label class="afl">Password (min 6 chars)</label>
+      <input class="afi" id="s-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSignup()">
+      <button class="abtn" id="signup-btn" onclick="doSignup()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+<!-- ─── SIDEBAR ─── -->
+<aside class="sidebar" id="sidebar">
+  <div class="logo-wrap" onclick="toggleSidebar()">
+    <div class="logo-icon">⚡</div>
+    <div class="logo-text">Learn<span>izy</span></div>
+  </div>
+  <nav style="width:100%;flex:1">
+    <div class="nav-item active" onclick="showPage('home',this)" title="Home">
+      <div class="icon">🏠</div><span class="nav-label">Home</span>
+    </div>
+    <div class="nav-item" onclick="showPage('subjects',this)" title="Subjects">
+      <div class="icon">📚</div><span class="nav-label">Subjects</span>
+    </div>
+    <div class="nav-item" onclick="showPage('videos',this)" title="Videos">
+      <div class="icon">🎥</div><span class="nav-label">Video Lessons</span>
+    </div>
+    <div class="nav-item" onclick="showPage('practice',this)" title="Practice">
+      <div class="icon">❓</div><span class="nav-label">Practice</span>
+    </div>
+    <div class="nav-item" onclick="showPage('tests',this)" title="Tests">
+      <div class="icon">📝</div><span class="nav-label">Tests & Quizzes</span>
+    </div>
+    <div class="nav-item" onclick="showPage('analytics',this)" title="Analytics">
+      <div class="icon">📊</div><span class="nav-label">Analytics</span>
+    </div>
+    <div class="nav-item" onclick="showPage('ai',this)" title="AI Doubt Solver">
+      <div class="icon">🧠</div><span class="nav-label">AI Tutor</span>
+    </div>
+    <div class="nav-item" onclick="showPage('leaderboard',this)" title="Leaderboard">
+      <div class="icon">🏆</div><span class="nav-label">Leaderboard</span>
+    </div>
+    <div class="nav-item" onclick="showPage('teacher',this)" title="Teacher Panel">
+      <div class="icon">👨‍🏫</div><span class="nav-label">Teacher Panel</span>
+    </div>
+  </nav>
+  <div class="bottom">
+    <div class="nav-item" onclick="toggleTheme()" title="Toggle Theme">
+      <div class="icon" id="theme-icon">🌙</div><span class="nav-label">Dark Mode</span>
+    </div>
+    <div class="nav-item" onclick="showPage('profile',this)" title="Profile">
+      <div class="icon">👤</div><span class="nav-label">Profile</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ─── MAIN ─── -->
+<div class="main">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="breadcrumb" id="breadcrumb"><b>Home</b></div>
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" placeholder="Search chapters, topics..." oninput="handleSearch(this.value)">
+    </div>
+    <div class="topbar-btns"><button onclick="doLogout()" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:5px 12px;font-size:12px;color:#9ba3c4;cursor:pointer">Logout</button>
+      <div class="icon-btn" onclick="showNotifModal()" style="position:relative" title="Notifications">
+        🔔
+        <div class="notif-dot"></div>
+      </div>
+      <div class="icon-btn" onclick="showPage('profile',null)" title="Profile" style="background:linear-gradient(135deg,var(--accent),var(--accent2));font-size:13px;font-weight:700;color:#fff">AK</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- ═══ HOME ═══ -->
+    <div class="page active" id="page-home">
+      <!-- Greeting -->
+      <div class="card" style="background:linear-gradient(135deg,#1a2050,#0d1540);border:1px solid rgba(79,125,255,0.2);margin-bottom:20px;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-20px;top:-20px;font-size:100px;opacity:.08">⚡</div>
+        <div class="flex items-center justify-between">
+          <div>
+            <div style="font-size:13px;color:#7c9ae8;margin-bottom:4px">Good evening 👋</div>
+            <div style="font-size:20px;font-weight:700">Aryan Kumar</div>
+            <div style="font-size:13px;color:#7c9ae8;margin-top:4px">Class 11 · NEET Foundation</div>
+          </div>
+          <div style="text-align:center">
+            <div class="streak-fire">🔥</div>
+            <div style="font-size:18px;font-weight:700">12</div>
+            <div style="font-size:11px;color:#7c9ae8">day streak</div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="flex justify-between" style="font-size:12px;color:#7c9ae8;margin-bottom:6px">
+            <span>Daily XP</span><span>420 / 600 XP</span>
+          </div>
+          <div class="xp-bar-wrap"><div class="xp-bar" style="width:70%"></div></div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid4" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div style="font-size:22px;margin-bottom:6px">📖</div>
+          <div class="stat-num">47</div>
+          <div class="stat-label">Chapters Done</div>
+          <div class="stat-badge up">↑ 3 this week</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:22px;margin-bottom:6px">✅</div>
+          <div class="stat-num">83%</div>
+          <div class="stat-label">Accuracy</div>
+          <div class="stat-badge up">↑ 5% vs last week</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:22px;margin-bottom:6px">⏱️</div>
+          <div class="stat-num">124h</div>
+          <div class="stat-label">Study Time</div>
+          <div class="stat-badge up">↑ 8h this week</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:22px;margin-bottom:6px">🥇</div>
+          <div class="stat-num">#14</div>
+          <div class="stat-label">Batch Rank</div>
+          <div class="stat-badge up">↑ 6 positions</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="section-title">📢 Announcements</div>
+      <div id="announcements-list" style="margin-bottom:20px"><div class="card card-sm t2 ts">Loading...</div></div>
+      <div class="section-title">Quick Actions</div>
+      <div class="grid4" style="margin-bottom:24px">
+        <div class="card card-sm" style="cursor:pointer;text-align:center" onclick="showPage('practice',null)">
+          <div style="font-size:28px;margin-bottom:6px">❓</div>
+          <div style="font-size:13px;font-weight:600">Practice</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">450 questions</div>
+        </div>
+        <div class="card card-sm" style="cursor:pointer;text-align:center" onclick="showPage('tests',null)">
+          <div style="font-size:28px;margin-bottom:6px">📝</div>
+          <div style="font-size:13px;font-weight:600">Mock Test</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">NEET Pattern</div>
+        </div>
+        <div class="card card-sm" style="cursor:pointer;text-align:center" onclick="showPage('videos',null)">
+          <div style="font-size:28px;margin-bottom:6px">🎥</div>
+          <div style="font-size:13px;font-weight:600">Watch</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">Resume lesson</div>
+        </div>
+        <div class="card card-sm" style="cursor:pointer;text-align:center" onclick="showPage('ai',null)">
+          <div style="font-size:28px;margin-bottom:6px">🧠</div>
+          <div style="font-size:13px;font-weight:600">Ask AI</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">Instant doubts</div>
+        </div>
+      </div>
+
+      <!-- Continue Learning -->
+      <div class="section-title">Continue Learning</div>
+      <div class="grid2" style="margin-bottom:24px">
+        <div class="card" style="cursor:pointer" onclick="showPage('subjects',null)">
+          <div class="flex items-center gap-12" style="margin-bottom:12px">
+            <div style="width:40px;height:40px;border-radius:10px;background:var(--phy-bg);border:1px solid var(--phy-border);display:flex;align-items:center;justify-content:center;font-size:18px">⚛️</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">Laws of Motion</div>
+              <div style="font-size:12px;color:var(--text2)">Physics · Chapter 5</div>
+            </div>
+          </div>
+          <div class="flex justify-between text-xs text-3">
+            <span>Progress</span><span style="color:var(--phy)">68%</span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill phy" style="width:68%"></div></div>
+        </div>
+        <div class="card" style="cursor:pointer" onclick="showPage('subjects',null)">
+          <div class="flex items-center gap-12" style="margin-bottom:12px">
+            <div style="width:40px;height:40px;border-radius:10px;background:var(--bio-bg);border:1px solid var(--bio-border);display:flex;align-items:center;justify-content:center;font-size:18px">🧬</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">Cell Division</div>
+              <div style="font-size:12px;color:var(--text2)">Biology · Chapter 10</div>
+            </div>
+          </div>
+          <div class="flex justify-between text-xs text-3">
+            <span>Progress</span><span style="color:var(--bio)">45%</span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill bio" style="width:45%"></div></div>
+        </div>
+      </div>
+
+      <!-- Upcoming Tests -->
+      <div class="section-title">Upcoming Tests</div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-12">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(79,125,255,0.15);display:flex;align-items:center;justify-content:center;font-size:20px">📝</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">NEET Full Mock #3</div>
+              <div style="font-size:12px;color:var(--text2)">180 questions · 3 hours · Tomorrow 10:00 AM</div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="showPage('tests',null)">Prepare</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-12">
+            <div style="width:44px;height:44px;border-radius:10px;background:var(--che-bg);display:flex;align-items:center;justify-content:center;font-size:20px">⚗️</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">Chemistry Chapter Quiz</div>
+              <div style="font-size:12px;color:var(--text2)">30 questions · 45 min · Today 6:00 PM</div>
+            </div>
+          </div>
+          <button class="btn btn-sm" style="background:var(--che-bg);color:var(--che);border:1px solid var(--che-border)" onclick="startQuiz()">Start</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SUBJECTS ═══ -->
+    <div class="page" id="page-subjects">
+      <div class="page-title">Subjects</div>
+      <div class="page-sub">Select your class and subject to start learning</div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">SELECT CLASS</div>
+        <div>
+          <span class="class-pill" onclick="selectClass(this,'6')">Class 6</span>
+          <span class="class-pill" onclick="selectClass(this,'7')">Class 7</span>
+          <span class="class-pill" onclick="selectClass(this,'8')">Class 8</span>
+          <span class="class-pill" onclick="selectClass(this,'9')">Class 9</span>
+          <span class="class-pill" onclick="selectClass(this,'10')">Class 10</span>
+          <span class="class-pill active" onclick="selectClass(this,'11')">Class 11</span>
+          <span class="class-pill" onclick="selectClass(this,'12')">Class 12</span>
+        </div>
+      </div>
+
+      <div class="grid4" style="margin-bottom:24px">
+        <div class="subj-card phy" onclick="showChapters('physics')">
+          <div class="subj-badge">NEET</div>
+          <div class="subj-icon">⚛️</div>
+          <div class="subj-name">Physics</div>
+          <div class="subj-count">15 chapters · 420 questions</div>
+          <div class="prog-bar" style="margin-top:10px"><div class="prog-fill phy" style="width:62%"></div></div>
+          <div style="font-size:11px;margin-top:5px;opacity:.8">62% complete</div>
+        </div>
+        <div class="subj-card che" onclick="showChapters('chemistry')">
+          <div class="subj-badge">NEET</div>
+          <div class="subj-icon">⚗️</div>
+          <div class="subj-name">Chemistry</div>
+          <div class="subj-count">16 chapters · 380 questions</div>
+          <div class="prog-bar" style="margin-top:10px"><div class="prog-fill che" style="width:45%"></div></div>
+          <div style="font-size:11px;margin-top:5px;opacity:.8">45% complete</div>
+        </div>
+        <div class="subj-card bio" onclick="showChapters('biology')">
+          <div class="subj-badge">NEET</div>
+          <div class="subj-icon">🧬</div>
+          <div class="subj-name">Biology</div>
+          <div class="subj-count">22 chapters · 610 questions</div>
+          <div class="prog-bar" style="margin-top:10px"><div class="prog-fill bio" style="width:38%"></div></div>
+          <div style="font-size:11px;margin-top:5px;opacity:.8">38% complete</div>
+        </div>
+        <div class="subj-card mat" onclick="showChapters('maths')">
+          <div class="subj-icon">∑</div>
+          <div class="subj-name">Mathematics</div>
+          <div class="subj-count">13 chapters · 350 questions</div>
+          <div class="prog-bar" style="margin-top:10px"><div class="prog-fill mat" style="width:75%"></div></div>
+          <div style="font-size:11px;margin-top:5px;opacity:.8">75% complete</div>
+        </div>
+      </div>
+
+      <!-- Chapter list (shown on subject click) -->
+      <div id="chapter-section" style="display:none">
+        <div class="flex items-center gap-12 mb-16">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('chapter-section').style.display='none'">← Back</button>
+          <div id="chapter-title" style="font-size:16px;font-weight:700"></div>
+        </div>
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'notes')">📄 Notes</div>
+          <div class="tab" onclick="switchTab(this,'formulas')">📐 Formulas</div>
+          <div class="tab" onclick="switchTab(this,'concepts')">💡 Concepts</div>
+        </div>
+        <div id="chapter-list"></div>
+      </div>
+    </div>
+
+    <!-- ═══ VIDEOS ═══ -->
+    <div class="page" id="page-videos">
+      <div class="page-title">Video Lessons</div>
+      <div class="page-sub">Watch structured lectures chapter by chapter</div>
+
+      <!-- Filters -->
+      <div class="flex gap-8 mb-16" style="flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm">All</button>
+        <button class="btn btn-ghost btn-sm">Physics</button>
+        <button class="btn btn-ghost btn-sm">Chemistry</button>
+        <button class="btn btn-ghost btn-sm">Biology</button>
+        <button class="btn btn-ghost btn-sm">Maths</button>
+      </div>
+
+      <!-- Featured / Resume -->
+      <div class="card" style="margin-bottom:20px;background:linear-gradient(135deg,var(--surface),var(--bg3))">
+        <div class="flex items-center gap-12 mb-12">
+          <div class="glow-dot"></div>
+          <span style="font-size:12px;font-weight:600;color:#51cf66">RESUME WHERE YOU LEFT</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:center">
+          <div>
+            <div style="font-size:16px;font-weight:700;margin-bottom:6px">Newton's Laws of Motion – Part 2</div>
+            <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Physics · Class 11 · Chapter 5</div>
+            <div class="flex gap-8">
+              <button class="btn btn-primary btn-sm" onclick="openVideoPlayer()">▶ Resume at 24:18</button>
+            </div>
+          </div>
+          <div class="video-thumb" onclick="openVideoPlayer()" style="aspect-ratio:16/9;background:linear-gradient(135deg,#1a2050,#0d1530);display:flex;align-items:center;justify-content:center;border-radius:var(--r12);cursor:pointer;position:relative">
+            <div style="font-size:40px;opacity:.4">⚛️</div>
+            <div class="play-btn">▶</div>
+            <div class="video-duration">24:18 / 58:42</div>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <div class="flex justify-between text-xs text-3 mb-4"><span>Watched</span><span>41%</span></div>
+          <div class="prog-bar"><div class="prog-fill accent" style="width:41%"></div></div>
+        </div>
+      </div>
+
+      <!-- Video Grid -->
+      <div class="section-title">Physics – Class 11</div>
+      <div class="grid3" id="video-grid">
+        <!-- Generated by JS -->
+      </div>
+    </div>
+
+    <!-- ═══ PRACTICE ═══ -->
+    <div class="page" id="page-practice">
+      <div class="page-title">Practice Questions</div>
+      <div class="page-sub">NCERT + NEET focused · Instant explanations</div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'mcq-section')">MCQ</div>
+        <div class="tab" onclick="switchTab(this,'assertion-section')">Assertion–Reason</div>
+        <div class="tab" onclick="switchTab(this,'case-section')">Case Based</div>
+      </div>
+
+      <div id="mcq-section">
+        <div class="flex gap-8 mb-16">
+          <button class="btn btn-sm" style="background:var(--bio-bg);color:var(--bio);border:1px solid var(--bio-border)">Biology</button>
+          <button class="btn btn-sm" style="background:var(--phy-bg);color:var(--phy);border:1px solid var(--phy-border)">Physics</button>
+          <select class="form-input" style="width:auto;padding:6px 12px;font-size:13px">
+            <option>All Difficulty</option>
+            <option>Easy</option>
+            <option>Medium</option>
+            <option>Hard</option>
+          </select>
+        </div>
+
+        <div class="question-card">
+          <div class="flex justify-between items-center mb-12">
+            <span class="badge badge-medium">Medium</span>
+            <span class="badge badge-neet">NEET 2023</span>
+          </div>
+          <div class="q-text">In mitosis, the chromosomes reach the poles and start decondensing. Which phase of cell division is this?</div>
+          <div id="mcq-options">
+            <div class="option" onclick="selectOption(this,'wrong')" data-opt="a"><div class="option-key">A</div>Metaphase</div>
+            <div class="option" onclick="selectOption(this,'wrong')" data-opt="b"><div class="option-key">B</div>Anaphase</div>
+            <div class="option" onclick="selectOption(this,'correct')" data-opt="c"><div class="option-key">C</div>Telophase</div>
+            <div class="option" onclick="selectOption(this,'wrong')" data-opt="d"><div class="option-key">D</div>Prophase</div>
+          </div>
+          <div id="solution-1" class="solution-box" style="display:none">
+            <b>✅ Correct Answer: Telophase</b><br><br>
+            During <b>Telophase</b>, chromosomes reach the poles and begin to decondense back into chromatin. The nuclear envelope reforms, nucleoli reappear, and cytokinesis begins. This marks the end of karyokinesis.
+          </div>
+        </div>
+
+        <div class="question-card">
+          <div class="flex justify-between items-center mb-12">
+            <span class="badge badge-hard">Hard</span>
+            <span class="badge badge-neet">NEET 2022</span>
+          </div>
+          <div class="q-text">The velocity of a particle moving in the positive direction of x-axis varies as v = α√x, where α is a positive constant. Assuming that at moment t=0 the particle was located at x=0, find the acceleration of the particle.</div>
+          <div>
+            <div class="option" onclick="selectOption(this,'wrong')"><div class="option-key">A</div>α²/4</div>
+            <div class="option" onclick="selectOption(this,'wrong')"><div class="option-key">B</div>α²</div>
+            <div class="option" onclick="selectOption(this,'correct')"><div class="option-key">C</div>α²/2</div>
+            <div class="option" onclick="selectOption(this,'wrong')"><div class="option-key">D</div>2α²</div>
+          </div>
+          <div id="solution-2" class="solution-box" style="display:none">
+            <b>✅ Correct Answer: α²/2</b><br><br>
+            v = α√x → a = v·(dv/dx) = α√x · (α/2√x) = α²/2. This is a constant acceleration, independent of position.
+          </div>
+        </div>
+
+        <div style="text-align:center;padding:16px">
+          <button class="btn btn-primary" onclick="showPage('practice',null)">Load More Questions ↓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TESTS ═══ -->
+    <div class="page" id="page-tests">
+      <div class="page-title">Tests & Quizzes</div>
+      <div class="page-sub">Chapter quizzes · Full mock tests · NEET pattern</div>
+
+      <div class="grid2" style="margin-bottom:24px">
+        <div class="card" style="background:linear-gradient(135deg,rgba(79,125,255,0.1),rgba(124,92,255,0.1));border-color:rgba(79,125,255,0.2);cursor:pointer" onclick="startQuiz()">
+          <div style="font-size:28px;margin-bottom:8px">🎯</div>
+          <div style="font-size:16px;font-weight:700;margin-bottom:4px">Chapter Quiz</div>
+          <div style="font-size:13px;color:var(--text2)">Quick 15-question quiz on the last chapter studied</div>
+          <button class="btn btn-primary btn-sm mt-12">Start Quiz</button>
+        </div>
+        <div class="card" style="background:linear-gradient(135deg,rgba(255,107,107,0.1),rgba(255,169,77,0.1));border-color:rgba(255,107,107,0.2);cursor:pointer" onclick="startMockTest()">
+          <div style="font-size:28px;margin-bottom:8px">📋</div>
+          <div style="font-size:16px;font-weight:700;margin-bottom:4px">NEET Mock Test</div>
+          <div style="font-size:13px;color:var(--text2)">Full 180Q · 3 hours · Exact NEET pattern</div>
+          <button class="btn btn-sm mt-12" style="background:rgba(255,107,107,0.2);color:var(--phy);border:1px solid rgba(255,107,107,0.3)">Start Mock</button>
+        </div>
+      </div>
+
+      <!-- Active Quiz UI -->
+      <div id="quiz-active" style="display:none">
+        <div class="card" style="margin-bottom:14px;background:var(--bg2);border-color:rgba(79,125,255,0.2)">
+          <div class="flex justify-between items-center">
+            <div>
+              <div style="font-size:14px;font-weight:700">Biology Chapter Quiz</div>
+              <div style="font-size:12px;color:var(--text2)">Question <span id="q-current">1</span> of 15</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:22px;font-weight:700;color:var(--phy);font-variant-numeric:tabular-nums" id="quiz-timer">12:00</div>
+              <div style="font-size:11px;color:var(--text2)">remaining</div>
+            </div>
+          </div>
+          <div class="prog-bar mt-8"><div class="prog-fill accent" id="quiz-prog" style="width:0%"></div></div>
+        </div>
+
+        <div class="question-card">
+          <div class="flex justify-between items-center mb-12">
+            <span class="badge badge-medium">Medium</span>
+            <span class="badge badge-neet">NEET Pattern</span>
+          </div>
+          <div class="q-text">Which of the following is NOT a function of the cell membrane?</div>
+          <div>
+            <div class="option" onclick="selectQuizOption(this,false)"><div class="option-key">A</div>Transport of substances</div>
+            <div class="option" onclick="selectQuizOption(this,false)"><div class="option-key">B</div>Cell recognition</div>
+            <div class="option" onclick="selectQuizOption(this,true)"><div class="option-key">C</div>Protein synthesis</div>
+            <div class="option" onclick="selectQuizOption(this,false)"><div class="option-key">D</div>Signal transduction</div>
+          </div>
+        </div>
+
+        <div class="flex gap-8">
+          <button class="btn btn-ghost btn-sm">← Previous</button>
+          <button class="btn btn-primary btn-sm flex-1" onclick="nextQuestion()">Next →</button>
+          <button class="btn btn-sm" style="background:rgba(81,207,102,0.15);color:#51cf66;border:1px solid rgba(81,207,102,0.3)" onclick="finishQuiz()">Submit</button>
+        </div>
+      </div>
+
+      <!-- Past Tests -->
+      <div class="section-title">Recent Attempts</div>
+      <div id="past-tests">
+        <div class="card card-sm flex items-center justify-between" style="margin-bottom:8px">
+          <div class="flex items-center gap-12">
+            <div style="width:36px;height:36px;border-radius:8px;background:var(--bio-bg);border:1px solid var(--bio-border);display:flex;align-items:center;justify-content:center">🧬</div>
+            <div>
+              <div style="font-size:13px;font-weight:600">Biology Mock #7</div>
+              <div style="font-size:11px;color:var(--text2)">90 questions · 45 min · Jun 12</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:15px;font-weight:700;color:#51cf66">148/180</div>
+            <div style="font-size:11px;color:var(--text2)">82% · Rank 8</div>
+          </div>
+        </div>
+        <div class="card card-sm flex items-center justify-between" style="margin-bottom:8px">
+          <div class="flex items-center gap-12">
+            <div style="width:36px;height:36px;border-radius:8px;background:var(--che-bg);border:1px solid var(--che-border);display:flex;align-items:center;justify-content:center">⚗️</div>
+            <div>
+              <div style="font-size:13px;font-weight:600">Chemistry Quiz – Organic</div>
+              <div style="font-size:11px;color:var(--text2)">30 questions · 20 min · Jun 10</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:15px;font-weight:700;color:#ffc107">22/30</div>
+            <div style="font-size:11px;color:var(--text2)">73% · Rank 14</div>
+          </div>
+        </div>
+        <div class="card card-sm flex items-center justify-between">
+          <div class="flex items-center gap-12">
+            <div style="width:36px;height:36px;border-radius:8px;background:var(--phy-bg);border:1px solid var(--phy-border);display:flex;align-items:center;justify-content:center">⚛️</div>
+            <div>
+              <div style="font-size:13px;font-weight:600">Physics Full Mock #2</div>
+              <div style="font-size:11px;color:var(--text2)">45 questions · 60 min · Jun 8</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:15px;font-weight:700;color:#51cf66">38/45</div>
+            <div style="font-size:11px;color:var(--text2)">84% · Rank 5</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ANALYTICS ═══ -->
+    <div class="page" id="page-analytics">
+      <div class="page-title">Performance Analytics</div>
+      <div class="page-sub">Track your growth, identify weak areas, improve faster</div>
+
+      <div class="grid4" style="margin-bottom:20px">
+        <div class="stat-card"><div class="stat-num" style="color:var(--accent)">83%</div><div class="stat-label">Overall Accuracy</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:#51cf66">124h</div><div class="stat-label">Total Study Time</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--phy)">#14</div><div class="stat-label">Current Rank</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--che)">2140</div><div class="stat-label">XP Points</div></div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:20px">
+        <!-- Subject accuracy -->
+        <div class="card">
+          <div class="card-title" style="font-size:14px;font-weight:700;margin-bottom:16px">Subject Accuracy</div>
+          <div style="margin-bottom:12px">
+            <div class="flex justify-between text-sm mb-4"><span style="color:var(--phy)">⚛️ Physics</span><span class="fw-600">79%</span></div>
+            <div class="prog-bar"><div class="prog-fill phy" style="width:79%"></div></div>
+          </div>
+          <div style="margin-bottom:12px">
+            <div class="flex justify-between text-sm mb-4"><span style="color:var(--che)">⚗️ Chemistry</span><span class="fw-600">88%</span></div>
+            <div class="prog-bar"><div class="prog-fill che" style="width:88%"></div></div>
+          </div>
+          <div style="margin-bottom:12px">
+            <div class="flex justify-between text-sm mb-4"><span style="color:var(--bio)">🧬 Biology</span><span class="fw-600">82%</span></div>
+            <div class="prog-bar"><div class="prog-fill bio" style="width:82%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-4"><span style="color:var(--mat)">∑ Maths</span><span class="fw-600">91%</span></div>
+            <div class="prog-bar"><div class="prog-fill mat" style="width:91%"></div></div>
+          </div>
+        </div>
+        <!-- Weak topics -->
+        <div class="card">
+          <div class="card-title" style="font-size:14px;font-weight:700;margin-bottom:16px">⚠️ Weak Topics</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="card card-sm" style="background:rgba(255,107,107,0.06);border-color:rgba(255,107,107,0.2)">
+              <div class="flex justify-between items-center">
+                <div>
+                  <div style="font-size:13px;font-weight:600">Rotational Motion</div>
+                  <div style="font-size:11px;color:var(--text2)">Physics · 48% accuracy</div>
+                </div>
+                <button class="btn btn-xs" style="background:var(--phy-bg);color:var(--phy);border:1px solid var(--phy-border)" onclick="showPage('practice',null)">Revise</button>
+              </div>
+            </div>
+            <div class="card card-sm" style="background:rgba(255,169,77,0.06);border-color:rgba(255,169,77,0.2)">
+              <div class="flex justify-between items-center">
+                <div>
+                  <div style="font-size:13px;font-weight:600">Coordination Compounds</div>
+                  <div style="font-size:11px;color:var(--text2)">Chemistry · 52% accuracy</div>
+                </div>
+                <button class="btn btn-xs" style="background:var(--che-bg);color:var(--che);border:1px solid var(--che-border)" onclick="showPage('practice',null)">Revise</button>
+              </div>
+            </div>
+            <div class="card card-sm" style="background:rgba(81,207,102,0.06);border-color:rgba(81,207,102,0.2)">
+              <div class="flex justify-between items-center">
+                <div>
+                  <div style="font-size:13px;font-weight:600">Genetics & Evolution</div>
+                  <div style="font-size:11px;color:var(--text2)">Biology · 61% accuracy</div>
+                </div>
+                <button class="btn btn-xs" style="background:var(--bio-bg);color:var(--bio);border:1px solid var(--bio-border)" onclick="showPage('practice',null)">Revise</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Analysis -->
+      <div class="card">
+        <div class="card-title" style="font-size:14px;font-weight:700;margin-bottom:16px">📅 Study Time – Last 7 Days</div>
+        <div style="display:flex;align-items:flex-end;gap:8px;height:100px">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="flex:1;width:100%;background:var(--phy);border-radius:4px 4px 0 0;height:60%;opacity:.8"></div>
+            <div style="font-size:10px;color:var(--text3)">Mon</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="flex:1;width:100%;background:var(--che);border-radius:4px 4px 0 0;height:80%;opacity:.8"></div>
+            <div style="font-size:10px;color:var(--text3)">Tue</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="flex:1;width:100%;background:var(--bio);border-radius:4px 4px 0 0;height:40%;opacity:.8"></div>
+            <div style="font-size:10px;color:var(--text3)">Wed</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="flex:1;width:100%;background:var(--accent);border-radius:4px 4px 0 0;height:95%;opacity:.8"></div>
+            <div style="font-size:10px;color:var(--text3)">Thu</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="flex:1;width:100%;background:var(--mat);border-radius:4px 4px 0 0;height:70%;opacity:.8"></div>
+            <div style="font-size:10px;color:var(--text3)">Fri</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="flex:1;width:100%;background:var(--phy);border-radius:4px 4px 0 0;height:50%;opacity:.8"></div>
+            <div style="font-size:10px;color:var(--text3)">Sat</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="flex:1;width:100%;background:var(--accent2);border-radius:4px 4px 0 0;height:85%;opacity:.8"></div>
+            <div style="font-size:10px;color:var(--text3)">Sun</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ AI TUTOR ═══ -->
+    <div class="page" id="page-ai">
+      <div class="page-title">🧠 AI Doubt Solver</div>
+      <div class="page-sub">Ask any question — get instant, step-by-step explanations</div>
+
+      <div class="chat-wrap">
+        <div class="chat-messages" id="chat-messages">
+          <div class="msg ai">
+            <div class="ai-label">⚡ Learnizy AI</div>
+            Hey! I'm your personal AI tutor. Ask me anything about Physics, Chemistry, Biology, or Maths. I can explain concepts, solve problems step by step, and help you understand tricky topics! 🎓
+          </div>
+          <div class="msg ai">
+            <div class="ai-label">⚡ Learnizy AI</div>
+            <b>Try asking:</b><br>
+            • "Explain Newton's second law with examples"<br>
+            • "What is the difference between mitosis and meiosis?"<br>
+            • "Solve: A ball thrown at 30° with 20 m/s, find max height"
+          </div>
+        </div>
+        <div class="chat-input-wrap">
+          <input class="chat-input" id="chat-input" placeholder="Ask your doubt here..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn btn-primary" onclick="sendChat()">Send ↗</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ LEADERBOARD ═══ -->
+    <div class="page" id="page-leaderboard">
+      <div class="page-title">🏆 Leaderboard</div>
+      <div class="page-sub">Top students this week · Earn XP to climb up!</div>
+
+      <div class="tabs mb-16">
+        <div class="tab active" onclick="switchTab(this,'lb-batch')">My Batch</div>
+        <div class="tab" onclick="switchTab(this,'lb-class')">Class 11</div>
+        <div class="tab" onclick="switchTab(this,'lb-all')">All India</div>
+      </div>
+
+      <!-- Top 3 podium -->
+      <div style="display:flex;justify-content:center;align-items:flex-end;gap:12px;margin-bottom:24px;padding:0 20px">
+        <div style="flex:1;text-align:center">
+          <div style="width:56px;height:56px;border-radius:50%;background:rgba(192,192,192,0.2);border:2px solid #c0c0c0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;margin:0 auto 6px;color:#c0c0c0">RS</div>
+          <div style="font-size:12px;font-weight:600">Riya S.</div>
+          <div style="font-size:11px;color:var(--text2)">3200 XP</div>
+          <div style="height:60px;background:rgba(192,192,192,0.15);border-radius:6px 6px 0 0;margin-top:6px;display:flex;align-items:center;justify-content:center;font-size:22px">🥈</div>
+        </div>
+        <div style="flex:1;text-align:center">
+          <div style="width:64px;height:64px;border-radius:50%;background:rgba(255,215,0,0.2);border:2px solid #ffd700;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;margin:0 auto 6px;color:#ffd700">KP</div>
+          <div style="font-size:13px;font-weight:700">Karan P.</div>
+          <div style="font-size:11px;color:var(--text2)">4100 XP</div>
+          <div style="height:80px;background:rgba(255,215,0,0.1);border-radius:6px 6px 0 0;margin-top:6px;display:flex;align-items:center;justify-content:center;font-size:24px">🥇</div>
+        </div>
+        <div style="flex:1;text-align:center">
+          <div style="width:52px;height:52px;border-radius:50%;background:rgba(205,127,50,0.2);border:2px solid #cd7f32;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin:0 auto 6px;color:#cd7f32">SV</div>
+          <div style="font-size:12px;font-weight:600">Sneha V.</div>
+          <div style="font-size:11px;color:var(--text2)">2980 XP</div>
+          <div style="height:48px;background:rgba(205,127,50,0.12);border-radius:6px 6px 0 0;margin-top:6px;display:flex;align-items:center;justify-content:center;font-size:20px">🥉</div>
+        </div>
+      </div>
+
+      <div id="lb-batch">
+        <div class="lb-item" style="border-color:rgba(79,125,255,0.3);background:rgba(79,125,255,0.05)">
+          <div class="lb-rank" style="color:var(--accent)">#14</div>
+          <div class="lb-avatar" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff">AK</div>
+          <div class="lb-name">Aryan Kumar <span style="font-size:11px;color:var(--text2)">(You)</span></div>
+          <div class="lb-score">2140 XP</div>
+        </div>
+        <div class="lb-item"><div class="lb-rank" style="color:#ffd700">#1</div><div class="lb-avatar" style="background:rgba(255,215,0,0.2);color:#ffd700">KP</div><div class="lb-name">Karan P.</div><div class="lb-score">4100 XP</div></div>
+        <div class="lb-item"><div class="lb-rank" style="color:#c0c0c0">#2</div><div class="lb-avatar" style="background:rgba(192,192,192,0.2);color:#c0c0c0">RS</div><div class="lb-name">Riya S.</div><div class="lb-score">3200 XP</div></div>
+        <div class="lb-item"><div class="lb-rank" style="color:#cd7f32">#3</div><div class="lb-avatar" style="background:rgba(205,127,50,0.2);color:#cd7f32">SV</div><div class="lb-name">Sneha V.</div><div class="lb-score">2980 XP</div></div>
+        <div class="lb-item"><div class="lb-rank">#4</div><div class="lb-avatar" style="background:var(--bg3)">AM</div><div class="lb-name">Amir M.</div><div class="lb-score">2870 XP</div></div>
+        <div class="lb-item"><div class="lb-rank">#5</div><div class="lb-avatar" style="background:var(--bg3)">PR</div><div class="lb-name">Priya R.</div><div class="lb-score">2700 XP</div></div>
+      </div>
+    </div>
+
+    <!-- ═══ TEACHER PANEL ═══ -->
+    <div class="page" id="page-teacher">
+      <div class="page-title">👨‍🏫 Teacher Panel</div>
+      <div class="page-sub">Upload content, manage tests, track students</div>
+
+      <div class="grid4" style="margin-bottom:20px">
+        <div class="stat-card"><div class="stat-num">284</div><div class="stat-label">Total Students</div></div>
+        <div class="stat-card"><div class="stat-num">142</div><div class="stat-label">Videos Uploaded</div></div>
+        <div class="stat-card"><div class="stat-num">38</div><div class="stat-label">Tests Created</div></div>
+        <div class="stat-card"><div class="stat-num">1.2K</div><div class="stat-label">Questions Bank</div></div>
+      </div>
+
+      <div class="tabs mb-16">
+        <div class="tab active" onclick="switchTab(this,'t-upload')">Upload</div>
+        <div class="tab" onclick="switchTab(this,'t-tests')">Create Test</div>
+        <div class="tab" onclick="switchTab(this,'t-students')">Students</div>
+        <div class="tab" onclick="switchTab(this,'t-announce')">Announce</div>
+      </div>
+
+      <div id="t-upload">
+        <div class="grid2" style="margin-bottom:16px">
+          <div>
+            <div class="upload-zone" onclick="this.style.borderColor='var(--accent)';this.querySelector('.upload-title').textContent='Click to browse files'">
+              <div class="upload-icon">📄</div>
+              <div class="upload-title">Upload Notes / PDF</div>
+              <div class="upload-sub">PDF, Word, Images · Max 50MB</div>
+              <button class="btn btn-primary btn-sm mt-12">Browse Files</button>
+            </div>
+          </div>
+          <div>
+            <div class="upload-zone" style="border-color:rgba(255,107,107,0.3)">
+              <div class="upload-icon">🎥</div>
+              <div class="upload-title">Upload Video Lecture</div>
+              <div class="upload-sub">MP4, MOV, AVI · Max 2GB</div>
+              <button class="btn btn-sm mt-12" style="background:var(--phy-bg);color:var(--phy);border:1px solid var(--phy-border)">Browse Video</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:14px">Content Organization</div>
+          <div class="grid3">
+            <div class="form-group">
+              <label class="form-label">Class</label>
+              <select class="form-input">
+                <option>Class 11</option>
+                <option>Class 12</option>
+                <option>Class 10</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Subject</label>
+              <select class="form-input">
+                <option>Biology</option>
+                <option>Physics</option>
+                <option>Chemistry</option>
+                <option>Maths</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Chapter</label>
+              <select class="form-input">
+                <option>Cell Division</option>
+                <option>Genetics</option>
+                <option>Photosynthesis</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Title</label>
+            <input class="form-input" placeholder="e.g. Mitosis – Detailed Notes">
+          </div>
+          <button class="btn btn-primary">Upload Content</button>
+        </div>
+      </div>
+
+      <div id="t-tests" style="display:none">
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:14px">Create New Test</div>
+          <div class="grid2">
+            <div class="form-group"><label class="form-label">Test Name</label><input class="form-input" placeholder="NEET Mock Test #4"></div>
+            <div class="form-group"><label class="form-label">Duration (min)</label><input class="form-input" type="number" value="180"></div>
+            <div class="form-group"><label class="form-label">Subject</label><select class="form-input"><option>All Subjects</option><option>Physics</option><option>Chemistry</option><option>Biology</option></select></div>
+            <div class="form-group"><label class="form-label">Difficulty</label><select class="form-input"><option>Mixed</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
+          </div>
+          <div class="form-group"><label class="form-label">Number of Questions</label><input class="form-input" type="number" value="90"></div>
+          <div class="form-group"><label class="form-label">Scheduled Date/Time</label><input class="form-input" type="datetime-local"></div>
+          <button class="btn btn-primary" onclick="saveQuestionToFirebase()">💾 Save Question</button>
+        </div>
+      </div>
+
+      <div id="t-students" style="display:none">
+        <div class="card">
+          <div class="flex justify-between items-center mb-16">
+            <div style="font-size:14px;font-weight:600">All Students (284)</div>
+            <div class="search-box" style="width:200px">
+              <span>🔍</span><input type="text" placeholder="Search...">
+            </div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead><tr style="border-bottom:1px solid var(--border)">
+              <th style="text-align:left;padding:8px;color:var(--text2);font-weight:500">Name</th>
+              <th style="text-align:left;padding:8px;color:var(--text2);font-weight:500">Class</th>
+              <th style="text-align:left;padding:8px;color:var(--text2);font-weight:500">Accuracy</th>
+              <th style="text-align:left;padding:8px;color:var(--text2);font-weight:500">Tests</th>
+              <th style="padding:8px;color:var(--text2);font-weight:500">Status</th>
+            </tr></thead>
+            <tbody id="student-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="t-announce" style="display:none">
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:14px">📢 Send Announcement</div>
+          <div class="form-group"><label class="form-label">Title</label><input class="form-input" placeholder="Important Test Tomorrow!"></div>
+          <div class="form-group"><label class="form-label">Message</label><textarea class="form-input" rows="4" placeholder="Write your announcement here..."></textarea></div>
+          <div class="form-group"><label class="form-label">Send to</label><select class="form-input"><option>All Students</option><option>Class 11</option><option>Class 12</option><option>NEET Batch</option></select></div>
+          <button class="btn btn-primary" onclick="sendAnnouncement()">📢 Send Announcement</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PROFILE ═══ -->
+    <div class="page" id="page-profile">
+      <div class="page-title">My Profile</div>
+      <div style="display:grid;grid-template-columns:280px 1fr;gap:16px">
+        <div>
+          <div class="card" style="text-align:center;margin-bottom:14px">
+            <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;margin:0 auto 12px">AK</div>
+            <div style="font-size:16px;font-weight:700">Aryan Kumar</div>
+            <div style="font-size:13px;color:var(--text2);margin-top:4px">Class 11 · NEET Foundation</div>
+            <div style="margin-top:10px"><span class="badge badge-premium">⭐ Premium</span></div>
+            <div class="flex justify-between mt-16" style="font-size:12px;color:var(--text2)"><span>Level 12</span><span>2140 / 2500 XP</span></div>
+            <div class="xp-bar-wrap mt-4"><div class="xp-bar" style="width:85%"></div></div>
+          </div>
+          <div class="card">
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px">🏅 Badges</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <div title="10 day streak" style="font-size:24px;cursor:pointer">🔥</div>
+              <div title="100 questions solved" style="font-size:24px;cursor:pointer">💯</div>
+              <div title="First mock test" style="font-size:24px;cursor:pointer">📝</div>
+              <div title="Biology master" style="font-size:24px;cursor:pointer">🧬</div>
+              <div title="Speed solver" style="font-size:24px;cursor:pointer">⚡</div>
+              <div title="Top 10 this week" style="font-size:24px;cursor:pointer">🥈</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card mb-12">
+            <div style="font-size:14px;font-weight:600;margin-bottom:16px">Account Settings</div>
+            <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" value="Aryan Kumar"></div>
+            <div class="form-group"><label class="form-label">Email</label><input class="form-input" value="aryan@email.com"></div>
+            <div class="form-group"><label class="form-label">Phone</label><input class="form-input" value="+91 9876543210"></div>
+            <div class="form-group"><label class="form-label">School</label><input class="form-input" value="Delhi Public School"></div>
+            <button class="btn btn-primary btn-sm">Save Changes</button>
+          </div>
+          <div class="card">
+            <div style="font-size:14px;font-weight:600;margin-bottom:16px">📱 Notifications</div>
+            <div class="flex justify-between items-center mb-12">
+              <span style="font-size:13px">Daily practice reminder</span>
+              <div style="width:40px;height:22px;border-radius:999px;background:var(--accent);cursor:pointer;position:relative"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;right:2px;transition:.2s"></div></div>
+            </div>
+            <div class="flex justify-between items-center mb-12">
+              <span style="font-size:13px">Test alerts</span>
+              <div style="width:40px;height:22px;border-radius:999px;background:var(--accent);cursor:pointer;position:relative"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;right:2px"></div></div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span style="font-size:13px">New content updates</span>
+              <div style="width:40px;height:22px;border-radius:999px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;position:relative"><div style="width:18px;height:18px;border-radius:50%;background:var(--text3);position:absolute;top:2px;left:2px"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ─── MOBILE NAV ─── -->
+<div class="mobile-nav">
+  <div class="mobile-nav-items">
+    <div class="mnav-item active" onclick="showPage('home',this)"><div class="micon">🏠</div><span>Home</span></div>
+    <div class="mnav-item" onclick="showPage('subjects',this)"><div class="micon">📚</div><span>Learn</span></div>
+    <div class="mnav-item" onclick="showPage('tests',this)"><div class="micon">📝</div><span>Tests</span></div>
+    <div class="mnav-item" onclick="showPage('ai',this)"><div class="micon">🧠</div><span>AI</span></div>
+    <div class="mnav-item" onclick="showPage('profile',this)"><div class="micon">👤</div><span>Profile</span></div>
+  </div>
+</div>
+
+<!-- Notification Modal -->
+<div class="modal-overlay" id="notif-modal" onclick="if(event.target===this)closeModal('notif-modal')">
+  <div class="modal">
+    <div class="modal-title">🔔 Notifications</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card card-sm" style="border-color:rgba(79,125,255,0.2)">
+        <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px">⚡ NEW TEST</div>
+        <div style="font-size:13px">NEET Full Mock #3 scheduled for tomorrow 10 AM</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">2 hours ago</div>
+      </div>
+      <div class="card card-sm">
+        <div style="font-size:12px;font-weight:600;color:#51cf66;margin-bottom:4px">✅ TEST RESULT</div>
+        <div style="font-size:13px">Biology Mock #7 result: 148/180 · Rank #8</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Yesterday</div>
+      </div>
+      <div class="card card-sm">
+        <div style="font-size:12px;font-weight:600;color:var(--che);margin-bottom:4px">📄 NEW CONTENT</div>
+        <div style="font-size:13px">Organic Chemistry – Reaction Mechanisms notes uploaded</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">2 days ago</div>
+      </div>
+      <div class="card card-sm">
+        <div style="font-size:12px;font-weight:600;color:#ffd700;margin-bottom:4px">🏆 ACHIEVEMENT</div>
+        <div style="font-size:13px">You earned "Speed Solver" badge!</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">3 days ago</div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm mt-12" onclick="closeModal('notif-modal')">Close</button>
+  </div>
+</div>
+
+<!-- Video Player Modal -->
+<div class="modal-overlay" id="video-modal" onclick="if(event.target===this)closeVideoModal()">
+  <div class="modal" style="width:640px;max-width:95%">
+    <div class="modal-title">⚛️ Newton's Laws of Motion – Part 2</div>
+    <div style="background:linear-gradient(135deg,#0d1530,#1a2050);border-radius:var(--r12);aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:14px;position:relative">
+      <div style="font-size:48px;opacity:.2">⚛️</div>
+      <div style="font-size:14px;color:#7c9ae8;margin-top:8px">Video Player</div>
+      <div style="position:absolute;bottom:12px;left:0;right:0;padding:0 16px">
+        <div style="background:rgba(255,255,255,0.15);height:4px;border-radius:999px;overflow:hidden"><div style="height:100%;width:41%;background:#fff;border-radius:999px"></div></div>
+        <div class="flex justify-between mt-4" style="font-size:11px;color:rgba(255,255,255,0.7)"><span>24:18</span><span>58:42</span></div>
+      </div>
+    </div>
+    <div class="flex gap-8 mb-12">
+      <button class="btn btn-ghost btn-sm">⏮ 10s</button>
+      <button class="btn btn-primary btn-sm flex-1">⏸ Pause</button>
+      <button class="btn btn-ghost btn-sm">10s ⏭</button>
+      <select class="form-input" style="width:auto;padding:6px 10px;font-size:12px"><option>1×</option><option>1.25×</option><option>1.5×</option><option>2×</option></select>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="closeVideoModal()">✕ Close</button>
+  </div>
+</div>
+
+<!-- Quiz Result Modal -->
+<div class="modal-overlay" id="quiz-result-modal">
+  <div class="modal" style="text-align:center">
+    <div style="font-size:56px;margin-bottom:12px">🎉</div>
+    <div style="font-size:22px;font-weight:700;margin-bottom:4px">Great Score!</div>
+    <div style="font-size:40px;font-weight:700;color:var(--accent);margin:12px 0">12/15</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px">80% accuracy · 8 min 24 sec · Rank #6 in batch</div>
+    <div class="grid3 mb-16">
+      <div class="stat-card"><div style="font-size:20px;margin-bottom:4px">✅</div><div style="font-size:16px;font-weight:700;color:#51cf66">12</div><div style="font-size:11px;color:var(--text2)">Correct</div></div>
+      <div class="stat-card"><div style="font-size:20px;margin-bottom:4px">❌</div><div style="font-size:16px;font-weight:700;color:var(--phy)">3</div><div style="font-size:11px;color:var(--text2)">Wrong</div></div>
+      <div class="stat-card"><div style="font-size:20px;margin-bottom:4px">⚡</div><div style="font-size:16px;font-weight:700;color:var(--accent)">+240</div><div style="font-size:11px;color:var(--text2)">XP Earned</div></div>
+    </div>
+    <div class="flex gap-8">
+      <button class="btn btn-ghost btn-sm flex-1" onclick="closeModal('quiz-result-modal');document.getElementById('quiz-active').style.display='none'">View Solutions</button>
+      <button class="btn btn-primary btn-sm flex-1" onclick="closeModal('quiz-result-modal');document.getElementById('quiz-active').style.display='none'">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───
+const state = {
+  darkMode: true,
+  sidebarExpanded: false,
+  quizTimer: null,
+  quizSeconds: 720,
+  quizStarted: false,
+  currentQ: 1,
+  chatHistory: []
+};
+
+// ─── Navigation ───
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  document.querySelectorAll('.mnav-item').forEach(n => n.classList.remove('active'));
+  if (el && el.classList.contains('mnav-item')) el.classList.add('active');
+
+  const titles = { home:'Home', subjects:'Subjects', videos:'Video Lessons', practice:'Practice Questions',
+    tests:'Tests & Quizzes', analytics:'Analytics', ai:'AI Tutor', leaderboard:'Leaderboard',
+    teacher:'Teacher Panel', profile:'My Profile' };
+  document.getElementById('breadcrumb').innerHTML = '<b>' + (titles[id] || id) + '</b>';
+
+  if (id === 'videos') renderVideos();
+  if (id === 'teacher') renderStudentTable();
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  state.sidebarExpanded = !state.sidebarExpanded;
+  sb.classList.toggle('expanded', state.sidebarExpanded);
+}
+
+// ─── Theme ───
+function toggleTheme() {
+  state.darkMode = !state.darkMode;
+  document.body.classList.toggle('light', !state.darkMode);
+  document.getElementById('theme-icon').textContent = state.darkMode ? '🌙' : '☀️';
+}
+
+// ─── Subject / Chapter ───
+const subjectChapters = {
+  physics: ['Physical World & Measurement','Kinematics','Laws of Motion','Work, Energy & Power','Rotational Motion','Gravitation','Properties of Matter','Thermodynamics','Oscillations','Waves'],
+  chemistry: ['Some Basic Concepts','Atomic Structure','Chemical Bonding','States of Matter','Thermodynamics','Equilibrium','Redox Reactions','Hydrogen','s-Block Elements','Organic Chemistry'],
+  biology: ['Living World','Biological Classification','Plant Kingdom','Animal Kingdom','Morphology of Plants','Anatomy of Plants','Cell Biology','Cell Division','Transport in Plants','Mineral Nutrition'],
+  maths: ['Sets & Functions','Algebra','Trigonometry','Coordinate Geometry','Calculus Intro','Linear Inequalities','Permutations','Binomial Theorem','Sequences & Series','Straight Lines']
+};
+const colorMap = { physics:'phy', chemistry:'che', biology:'bio', maths:'mat' };
+
+function showChapters(subj) {
+  document.getElementById('chapter-section').style.display = 'block';
+  const colors = { physics:'#ff6b6b', chemistry:'#ffa94d', biology:'#51cf66', maths:'#4dabf7' };
+  document.getElementById('chapter-title').innerHTML = `<span style="color:${colors[subj]}">${subj.charAt(0).toUpperCase()+subj.slice(1)}</span> – Class 11`;
+  const chapters = subjectChapters[subj];
+  const cls = colorMap[subj];
+  document.getElementById('chapter-list').innerHTML = chapters.map((ch, i) => {
+    const prog = Math.floor(Math.random() * 100);
+    return `<div class="chapter-item" onclick="showPage('practice',null)">
+      <div class="chapter-num" style="background:var(--${cls}-bg);color:var(--${cls});border:1px solid var(--${cls}-border)">${i+1}</div>
+      <div class="chapter-info">
+        <div class="chapter-name">${ch}</div>
+        <div class="chapter-meta">12 notes · 8 videos · 45 questions</div>
+        <div class="prog-bar" style="margin-top:6px"><div class="prog-fill ${cls}" style="width:${prog}%"></div></div>
+      </div>
+      <div class="chapter-prog">${prog}%</div>
+    </div>`;
+  }).join('');
+  document.getElementById('chapter-section').scrollIntoView({behavior:'smooth'});
+}
+
+function selectClass(el, cls) {
+  document.querySelectorAll('.class-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ─── Tabs ───
+function switchTab(el, targetId) {
+  const parent = el.closest('.tabs');
+  parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const page = el.closest('.page');
+  const sections = [targetId, 'mcq-section','assertion-section','case-section','lb-batch','lb-class','lb-all','t-upload','t-tests','t-students','t-announce'];
+  sections.forEach(sid => {
+    const s = document.getElementById(sid);
+    if (s) s.style.display = (sid === targetId) ? 'block' : (s.style.display !== undefined ? 'none' : 'none');
+  });
+  document.getElementById(targetId).style.display = 'block';
+}
+
+// ─── MCQ Options ───
+function selectOption(el, type) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.option').forEach(o => { o.classList.remove('selected','correct','wrong'); });
+  el.classList.add(type);
+  const solutionKey = type === 'correct' ? 'solution-1' : 'solution-1';
+  const sol = el.closest('.question-card').querySelector('.solution-box');
+  if (sol) sol.style.display = 'block';
+}
+
+// ─── Videos ───
+const videoData = [
+  {title:'Physical World & Measurement',dur:'42:18',subj:'Physics',ch:1,cls:'phy'},
+  {title:'Kinematics – Part 1',dur:'55:30',subj:'Physics',ch:2,cls:'phy'},
+  {title:'Laws of Motion – Part 1',dur:'48:12',subj:'Physics',ch:3,cls:'phy'},
+  {title:'Thermodynamics Basics',dur:'61:44',subj:'Chemistry',ch:6,cls:'che'},
+  {title:'Organic Chemistry Intro',dur:'53:20',subj:'Chemistry',ch:9,cls:'che'},
+  {title:'Cell Structure & Function',dur:'44:55',subj:'Biology',ch:8,cls:'bio'},
+];
+function renderVideos() {
+  document.getElementById('video-grid').innerHTML = videoData.map(v => `
+    <div style="cursor:pointer" onclick="openVideoPlayer()">
+      <div class="video-thumb" style="background:linear-gradient(135deg,var(--bg3),var(--bg4));border-radius:var(--r12);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+        <div style="font-size:36px;opacity:.3">${v.cls==='phy'?'⚛️':v.cls==='che'?'⚗️':'🧬'}</div>
+        <div class="play-btn">▶</div>
+        <div class="video-duration">${v.dur}</div>
+      </div>
+      <div style="padding:10px 2px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px;line-height:1.4">${v.title}</div>
+        <div style="font-size:11px;color:var(--text2)">${v.subj} · Chapter ${v.ch}</div>
+      </div>
+    </div>`).join('');
+}
+
+function openVideoPlayer() { openModal('video-modal'); }
+function closeVideoModal() { closeModal('video-modal'); }
+
+// ─── Quiz ───
+function startQuiz() {
+  document.getElementById('quiz-active').style.display = 'block';
+  document.getElementById('quiz-active').scrollIntoView({behavior:'smooth'});
+  if (!state.quizTimer) startQuizTimer();
+}
+function startMockTest() { startQuiz(); }
+function startQuizTimer() {
+  state.quizSeconds = 720;
+  state.quizTimer = setInterval(() => {
+    state.quizSeconds--;
+    const m = Math.floor(state.quizSeconds / 60), s = state.quizSeconds % 60;
+    const el = document.getElementById('quiz-timer');
+    if (el) el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    if (state.quizSeconds <= 0) finishQuiz();
+  }, 1000);
+}
+function selectQuizOption(el, isCorrect) {
+  el.parentElement.querySelectorAll('.option').forEach(o => o.classList.remove('selected','correct','wrong'));
+  el.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) el.parentElement.querySelectorAll('.option')[2].classList.add('correct');
+  const prog = (state.currentQ / 15) * 100;
+  document.getElementById('quiz-prog').style.width = prog + '%';
+}
+function nextQuestion() {
+  if (state.currentQ < 15) {
+    state.currentQ++;
+    document.getElementById('q-current').textContent = state.currentQ;
+    document.getElementById('quiz-prog').style.width = (state.currentQ/15*100) + '%';
+  }
+}
+function finishQuiz() {
+  if (state.quizTimer) { clearInterval(state.quizTimer); state.quizTimer = null; }
+  state.currentQ = 1;
+  openModal('quiz-result-modal');
+}
+
+// ─── AI Chat ───
+const aiResponses = {
+  default: "Great question! Let me explain this step by step. This is a fundamental concept in NEET syllabus.\n\n1. First, let's understand the basics...\n2. The key principle here is...\n3. For NEET, remember that...\n\nWould you like me to give you a practice question on this topic? 🎯",
+  newton: "**Newton's Second Law: F = ma**\n\nForce = Mass × Acceleration\n\n**Example:** A 5 kg box is pushed with 20N force.\na = F/m = 20/5 = **4 m/s²**\n\n🎯 NEET Tip: In problems involving multiple forces, always find **net force** first, then apply F=ma.",
+  mitosis: "**Mitosis vs Meiosis – Key Differences:**\n\n| Feature | Mitosis | Meiosis |\n|---------|---------|----------|\n| Divisions | 1 | 2 |\n| Daughter cells | 2 | 4 |\n| Chromosome # | Same | Halved |\n| Where | Somatic | Germ cells |\n\n🔬 **Mitosis phases:** PMAT (Prophase → Metaphase → Anaphase → Telophase)",
+  photosynthesis: "**Photosynthesis Equation:**\n6CO₂ + 6H₂O + Light → C₆H₁₂O₆ + 6O₂\n\n**Two stages:**\n1. **Light reactions** (Thylakoid) – Produces ATP & NADPH\n2. **Calvin Cycle** (Stroma) – Uses ATP to make glucose\n\n⚡ NEET 2023 asked about the Z-scheme of light reactions!"
+};
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const messagesEl = document.getElementById('chat-messages');
+  messagesEl.innerHTML += `<div class="msg user">${text}</div>`;
+
+  const lower = text.toLowerCase();
+  let response = aiResponses.default;
+  if (lower.includes('newton') || lower.includes('force') || lower.includes('motion')) response = aiResponses.newton;
+  else if (lower.includes('mitosis') || lower.includes('meiosis') || lower.includes('cell division')) response = aiResponses.mitosis;
+  else if (lower.includes('photosynthesis') || lower.includes('chlorophyll')) response = aiResponses.photosynthesis;
+
+  setTimeout(() => {
+    messagesEl.innerHTML += `<div class="msg ai"><div class="ai-label">⚡ Learnizy AI</div>${response.replace(/\n/g,'<br>')}</div>`;
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }, 600);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// ─── Teacher / Students table ───
+const mockStudents = [
+  {name:'Riya Sharma',cls:'11',acc:'91%',tests:12},{name:'Karan Patel',cls:'11',acc:'88%',tests:15},
+  {name:'Sneha Verma',cls:'12',acc:'84%',tests:10},{name:'Amir Mohd',cls:'11',acc:'79%',tests:8},
+  {name:'Priya Rao',cls:'12',acc:'76%',tests:11},{name:'Arjun Gupta',cls:'11',acc:'72%',tests:9}
+];
+function renderStudentTable() {
+  const tbody = document.getElementById('student-table');
+  if (!tbody) return;
+  tbody.innerHTML = mockStudents.map(s => `<tr style="border-bottom:1px solid var(--border)">
+    <td style="padding:10px 8px">${s.name}</td>
+    <td style="padding:10px 8px;color:var(--text2)">${s.cls}</td>
+    <td style="padding:10px 8px"><span style="font-weight:600;color:${parseInt(s.acc)>=80?'#51cf66':parseInt(s.acc)>=70?'#ffc107':'#ff6b6b'}">${s.acc}</span></td>
+    <td style="padding:10px 8px;color:var(--text2)">${s.tests}</td>
+    <td style="padding:10px 8px;text-align:center"><span class="badge badge-easy">Active</span></td>
+  </tr>`).join('');
+}
+
+// ─── Modals ───
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function showNotifModal() { openModal('notif-modal'); }
+
+// ─── Search ───
+function handleSearch(v) {
+  if (v.length > 2) console.log('Searching for:', v);
+}
+
+// ─── Init ───
+renderVideos();
+
+// Animate XP bar on load
+setTimeout(() => {
+  document.querySelectorAll('.xp-bar').forEach(el => {
+    const w = el.style.width;
+    el.style.width = '0%';
+    setTimeout(() => el.style.width = w, 100);
+  });
+  document.querySelectorAll('.prog-fill').forEach(el => {
+    const w = el.style.width;
+    el.style.width = '0%';
+    setTimeout(() => el.style.width = w, 100);
+  });
+}, 200);
+
+
+// ═══ FIREBASE AUTH ═══
+var CU=null, UD=null, selectedRole='student';
+
+auth.onAuthStateChanged(function(u){
+  if(u){
+    CU=u;
+    db.collection('users').doc(u.uid).get().then(function(snap){
+      var data=snap.data();
+      if(data){ UD=data; } 
+      else { UD={name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0}; }
+      bootApp();
+    }).catch(function(){
+      UD={name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
+      bootApp();
+    });
+  } else { showAuthScreen(); }
+});
+
+function bootApp(){
+  document.getElementById('auth-screen').className='off';
+  // Update UI with real user data
+  var name=UD.name||CU.displayName||'User';
+  var initials=name.split(' ').map(function(n){return n[0];}).join('').slice(0,2).toUpperCase();
+  // Update topbar avatar
+  var av=document.getElementById('av-btn')||document.querySelector('.icon-btn[title="Profile"]');
+  if(av){av.textContent=initials;av.style.fontSize='12px';av.style.fontWeight='700';}
+  // Update greeting
+  var hn=document.getElementById('home-name');
+  if(hn)hn.textContent=name;
+  var hc=document.getElementById('home-class');
+  if(hc)hc.textContent=(UD.class||'')+(UD.class?' · ':'')+'Learnizy';
+  // Show teacher panel if teacher
+  var tni=document.getElementById('teacher-nav-item');
+  if(tni) tni.style.display=(UD.role==='teacher')?'':'none';
+  // Load announcements
+  loadAnnouncements();
+  loadPracticeQs();
+}
+
+function showAuthScreen(){
+  document.getElementById('auth-screen').className='';
+}
+
+function switchAuthTab(t){
+  document.getElementById('atab-l').className='atab'+(t==='login'?' on':'');
+  document.getElementById('atab-s').className='atab'+(t==='signup'?' on':'');
+  document.getElementById('sec-login').style.display=t==='login'?'':'none';
+  document.getElementById('sec-signup').style.display=t==='signup'?'':'none';
+  var m=document.getElementById('amsg');m.style.display='none';
+}
+
+function setRole(r){
+  selectedRole=r;
+  document.getElementById('r-stu').className='arbtn'+(r==='student'?' on':'');
+  document.getElementById('r-tea').className='arbtn'+(r==='teacher'?' on':'');
+  document.getElementById('cls-wrap').style.display=r==='student'?'':'none';
+}
+
+function showMsg(txt,type){
+  var el=document.getElementById('amsg');
+  el.textContent=txt;el.className='amsg '+type;el.style.display='block';
+}
+
+function doLogin(){
+  var e=document.getElementById('l-email').value.trim();
+  var p=document.getElementById('l-pass').value;
+  if(!e||!p){showMsg('Please enter email and password.','err');return;}
+  var btn=document.getElementById('login-btn');
+  btn.disabled=true;btn.textContent='Logging in...';
+  showMsg('Connecting...','info');
+  auth.signInWithEmailAndPassword(e,p)
+    .then(function(){var m=document.getElementById('amsg');if(m)m.style.display='none';})
+    .catch(function(err){
+      var msgs={'auth/user-not-found':'No account with this email.','auth/wrong-password':'Wrong password.','auth/invalid-credential':'Wrong email or password.','auth/network-request-failed':'No internet connection.'};
+      showMsg(msgs[err.code]||err.message,'err');
+      btn.disabled=false;btn.textContent='Login →';
+    });
+}
+
+function doSignup(){
+  var n=document.getElementById('s-name').value.trim();
+  var e=document.getElementById('s-email').value.trim();
+  var p=document.getElementById('s-pass').value;
+  var c=document.getElementById('s-cls').value;
+  if(!n||!e||!p){showMsg('Please fill all fields.','err');return;}
+  if(selectedRole==='student'&&!c){showMsg('Please select your class.','err');return;}
+  if(p.length<6){showMsg('Password must be at least 6 characters.','err');return;}
+  var btn=document.getElementById('signup-btn');
+  btn.disabled=true;btn.textContent='Creating account...';
+  auth.createUserWithEmailAndPassword(e,p)
+    .then(function(cr){
+      return Promise.all([
+        cr.user.updateProfile({displayName:n}),
+        db.collection('users').doc(cr.user.uid).set({
+          name:n,email:e,role:selectedRole,class:c||'',
+          xp:0,streak:0,testsTaken:0,chaptersCompleted:0,
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        })
+      ]);
+    })
+    .then(function(){showMsg('Account created! Logging you in...','ok');})
+    .catch(function(err){showMsg(err.message,'err');btn.disabled=false;btn.textContent='Create Account →';});
+}
+
+function doLogout(){auth.signOut();}
+
+// Load announcements from Firebase
+function loadAnnouncements(){
+  if(!CU)return;
+  db.collection('announcements').orderBy('createdAt','desc').limit(5).get()
+    .then(function(snap){
+      var el=document.getElementById('announcements-list');
+      if(!el)return;
+      if(snap.empty){el.innerHTML='<div class="card card-sm t2 ts">No announcements yet.</div>';return;}
+      el.innerHTML=snap.docs.map(function(d){
+        var a=d.data();
+        return '<div class="card card-sm" style="border-color:rgba(79,125,255,.2);margin-bottom:8px"><div style="font-size:12px;font-weight:600;color:#4f7dff;margin-bottom:4px">📢 '+a.title+'</div><div style="font-size:13px;color:#9ba3c4">'+a.message+'</div></div>';
+      }).join('');
+    }).catch(function(){});
+}
+
+// Load practice questions from Firebase
+function loadPracticeQs(){
+  if(!CU)return;
+  db.collection('questions').limit(10).get()
+    .then(function(snap){
+      if(snap.empty)return;
+      // Questions available - update UI
+      var el=document.getElementById('qs-count');
+      if(el)el.textContent=snap.size+' questions';
+    }).catch(function(){});
+}
+
+// Send announcement (teacher)
+function sendAnnouncement(){
+  if(!CU)return;
+  var title=document.getElementById('ann-title').value.trim();
+  var msg=document.getElementById('ann-msg').value.trim();
+  if(!title||!msg){alert('Fill title and message.');return;}
+  db.collection('announcements').add({
+    title:title,message:msg,sentBy:UD.name||'Teacher',
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    document.getElementById('ann-title').value='';
+    document.getElementById('ann-msg').value='';
+    alert('✅ Announcement sent to all students!');
+    loadAnnouncements();
+  }).catch(function(e){alert('Error: '+e.message);});
+}
+
+// Save Google Drive link
+function saveExtLink(){
+  if(!CU)return;
+  var url=document.getElementById('ext-link')?document.getElementById('ext-link').value.trim():'';
+  var t=document.getElementById('up-title')?document.getElementById('up-title').value.trim():'Resource';
+  if(!url){alert('Please paste a Google Drive link.');return;}
+  if(url.includes('drive.google.com/file')){
+    var match=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if(match)url='https://drive.google.com/file/d/'+match[1]+'/preview';
+  }
+  db.collection('content').add({
+    title:t||'Resource',
+    subject:document.getElementById('up-subj')?document.getElementById('up-subj').value:'General',
+    class:document.getElementById('up-class')?document.getElementById('up-class').value:'',
+    chapter:document.getElementById('up-chapter')?document.getElementById('up-chapter').value:'General',
+    fileUrl:url,type:'pdf',
+    uploadedBy:CU.uid,uploaderName:UD.name||'Teacher',
+    timestamp:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    alert('✅ Link saved! Students can now access it.');
+    if(document.getElementById('ext-link'))document.getElementById('ext-link').value='';
+  }).catch(function(e){alert('Error: '+e.message);});
+}
+
+// Save question to Firebase
+function saveQuestionToFirebase(){
+  if(!CU)return;
+  var q=document.getElementById('q-text')?document.getElementById('q-text').value.trim():'';
+  if(!q){alert('Enter question text.');return;}
+  db.collection('questions').add({
+    question:q,
+    optA:document.getElementById('q-a')?document.getElementById('q-a').value.trim():'',
+    optB:document.getElementById('q-b')?document.getElementById('q-b').value.trim():'',
+    optC:document.getElementById('q-c')?document.getElementById('q-c').value.trim():'',
+    optD:document.getElementById('q-d')?document.getElementById('q-d').value.trim():'',
+    correct:parseInt(document.getElementById('q-ans')?document.getElementById('q-ans').value:'0'),
+    explanation:document.getElementById('q-expl')?document.getElementById('q-expl').value.trim():'',
+    subject:document.getElementById('q-subj')?document.getElementById('q-subj').value:'Biology',
+    difficulty:document.getElementById('q-diff')?document.getElementById('q-diff').value:'medium',
+    chapter:document.getElementById('q-ch')?document.getElementById('q-ch').value.trim():'',
+    createdBy:CU.uid,
+    timestamp:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    ['q-text','q-a','q-b','q-c','q-d','q-expl','q-ch'].forEach(function(id){
+      var el=document.getElementById(id);if(el)el.value='';
+    });
+    alert('✅ Question saved to question bank!');
+  }).catch(function(e){alert('Error: '+e.message);});
+}
+
+</script>
+</body>
+</html>
