@@ -716,7 +716,7 @@ function loadSubjPDFs(s){
       if(snap.empty){el.innerHTML='<div class="card" style="font-size:12px;color:var(--tx2)">No notes uploaded yet for '+s+'. Ask your teacher.</div>';return;}
       el.innerHTML=snap.docs.map(function(d){
         var f=d.data();
-        return '<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer" onclick="openF(\''+f.fileUrl+'\')"><div style="font-size:20px">'+( f.type==='video'?'🎥':'📄')+'</div><div style="flex:1"><div style="font-size:13px;font-weight:600">'+( f.title||'Untitled')+'</div><div style="font-size:11px;color:var(--tx2)">'+( f.chapter||'')+'</div></div><span style="color:var(--ac);font-size:12px;font-weight:600">Open ›</span></div>';
+        return '<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="font-size:20px">'+( f.type==='video'?'🎥':'📄')+'</div><div style="flex:1"><div style="font-size:13px;font-weight:600">'+( f.title||'Untitled')+'</div><div style="font-size:11px;color:var(--tx2)">'+( f.chapter||'')+'</div></div><button onclick="openF(\''+f.fileUrl+'\')" style="padding:5px 10px;border-radius:999px;background:var(--acg);color:var(--ac);border:1px solid var(--ac);font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">👁 View</button><button onclick="downloadF(\''+f.fileUrl+'\',\''+( f.title||'file')+'\')" style="padding:5px 10px;border-radius:999px;background:rgba(81,207,102,.15);color:#51cf66;border:1px solid rgba(81,207,102,.3);font-size:11px;font-weight:600;cursor:pointer">⬇ Download</button></div>';
       }).join('');
     }).catch(function(){el.innerHTML='<div style="font-size:12px;color:var(--tx2)">Error loading.</div>';});
 }
@@ -729,11 +729,39 @@ function loadChNotes(s,ch){
     .then(function(snap){
       var back='<button class="btn bg" style="margin-bottom:10px;font-size:11px" onclick="loadSubjPDFs(\''+s+'\')">← All '+s+'</button>';
       if(snap.empty){el.innerHTML=back+'<div class="card" style="font-size:12px;color:var(--tx2)">No notes for '+ch+' yet.</div>';return;}
-      el.innerHTML=back+snap.docs.map(function(d){var f=d.data();return '<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer" onclick="openF(\''+f.fileUrl+'\')"><div style="font-size:20px">📄</div><div style="flex:1"><div style="font-size:13px;font-weight:600">'+( f.title||'Untitled')+'</div></div><span style="color:var(--ac);font-size:12px">Open ›</span></div>';}).join('');
+      el.innerHTML=back+snap.docs.map(function(d){var f=d.data();return '<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="font-size:20px">📄</div><div style="flex:1"><div style="font-size:13px;font-weight:600">'+( f.title||'Untitled')+'</div></div><button onclick="openF(\''+f.fileUrl+'\')" style="padding:5px 10px;border-radius:999px;background:var(--acg);color:var(--ac);border:1px solid var(--ac);font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">👁 View</button><button onclick="downloadF(\''+f.fileUrl+'\',\''+( f.title||'file')+'\')" style="padding:5px 10px;border-radius:999px;background:rgba(81,207,102,.15);color:#51cf66;border:1px solid rgba(81,207,102,.3);font-size:11px;font-weight:600;cursor:pointer">⬇ Download</button></div>';}).join('');
     }).catch(function(){});
 }
 
-function openF(url){if(url)window.open(url,'_blank');}
+function openF(url, title) {
+  if(!url) return;
+  // For Cloudinary URLs - add download flag
+  if(url.includes('cloudinary.com')) {
+    // Force download by adding fl_attachment to Cloudinary URL
+    var downloadUrl = url.replace('/upload/', '/upload/fl_attachment/');
+    // Open in new tab for viewing
+    window.open(url, '_blank');
+  } else {
+    window.open(url, '_blank');
+  }
+}
+
+function downloadF(url, title) {
+  if(!url) return;
+  // Create a temporary link and click it to download
+  var a = document.createElement('a');
+  if(url.includes('cloudinary.com')) {
+    // Add fl_attachment to force download from Cloudinary
+    a.href = url.replace('/upload/', '/upload/fl_attachment/');
+  } else {
+    a.href = url;
+  }
+  a.download = title || 'file';
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 
 // ═══════════════════════════════════════
 // ANNOUNCEMENTS
