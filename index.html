@@ -392,11 +392,12 @@ input,textarea,select{font-family:'DM Sans',sans-serif;color:var(--tx)}
           <div class="tab2" onclick="tTab(this,'tt-stu')">👥 Students</div>
         </div>
         <div id="tt-up">
-          <div class="upz" onclick="document.getElementById('pf').click()" ondragover="event.preventDefault()" ondrop="dropF(event)">
+          <div class="upz" ondragover="event.preventDefault();this.style.borderColor='var(--ac)'" ondragleave="this.style.borderColor=''" ondrop="dropF(event)">
             <div style="font-size:28px;margin-bottom:6px">📄</div>
-            <div style="font-size:13px;font-weight:600;margin-bottom:2px">Upload Notes / PDF</div>
-            <div style="font-size:11px;color:var(--tx2)">Drag & drop or click · Max 20MB</div>
-            <input type="file" id="pf" accept=".pdf,.jpg,.png,.doc,.docx" style="display:none" onchange="uploadF(this.files[0])">
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px">Upload Notes / PDF</div>
+            <div style="font-size:11px;color:var(--tx2);margin-bottom:12px">Drag & drop here · OR click button below · Max 20MB</div>
+            <label for="pf" style="display:inline-block;padding:10px 20px;background:var(--ac);color:#fff;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif">📁 Choose File</label>
+            <input type="file" id="pf" accept=".pdf,.jpg,.png,.doc,.docx,.ppt,.pptx" style="display:none" onchange="uploadF(this.files[0])">
           </div>
           <div class="card" style="margin-top:10px">
             <div style="font-size:12px;font-weight:600;margin-bottom:8px">📎 Or add Google Drive / YouTube link</div>
