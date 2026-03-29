@@ -1047,39 +1047,43 @@ input,textarea,select{font-family:var(--ff2);color:inherit}
       </div>
 
       <div id="t-upload">
-        <div class="grid2" style="margin-bottom:16px">
-          <div>
-            <div class="upload-zone" onclick="this.style.borderColor='var(--accent)';this.querySelector('.upload-title').textContent='Click to browse files'">
-              <div class="upload-icon">📄</div>
-              <div class="upload-title">Upload Notes / PDF</div>
-              <div class="upload-sub">Drag & drop OR click button below · Max 20MB</div>
-              <div id="up-prog-bar" style="display:none;height:6px;background:rgba(255,255,255,.1);border-radius:999px;margin-top:10px"><div id="up-prog-fill" style="height:100%;background:linear-gradient(90deg,#4f7dff,#7c5cff);border-radius:999px;width:0%;transition:width .3s"></div></div>
-              <div id="up-status" style="font-size:12px;margin-top:8px;color:#9ba3c4"></div>
-              <label for="pdf-upload-input" class="btn btn-primary btn-sm mt-12" style="cursor:pointer">📁 Choose File</label>
-              <input type="file" id="pdf-upload-input" accept=".pdf,.jpg,.png,.doc,.docx,.ppt,.pptx" style="display:none" onchange="uploadFile(this.files[0])">
-            </div>
+        <!-- UPLOAD ZONE -->
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-size:14px;font-weight:600;margin-bottom:12px">📄 Upload PDF Notes</div>
+          
+          <!-- Progress -->
+          <div id="up-prog-bar" style="display:none;height:6px;background:var(--bg3);border-radius:999px;margin-bottom:8px">
+            <div id="up-prog-fill" style="height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px;width:0%;transition:width .3s"></div>
           </div>
-          <div>
-            <div class="upload-zone" style="border-color:rgba(255,107,107,0.3)">
-              <div class="upload-icon">🎥</div>
-              <div class="upload-title">Upload Video</div>
-              <div class="upload-sub">MP4, MOV via Cloudinary · Free</div>
-              <label for="vid-upload-input" class="btn btn-sm mt-12" style="background:var(--phy-bg);color:var(--phy);border:1px solid var(--phy-border);cursor:pointer">🎬 Choose Video</label>
-              <input type="file" id="vid-upload-input" accept="video/*" style="display:none" onchange="uploadFile(this.files[0])">
-            </div>
-          </div>
-        </div>
+          <div id="up-status" style="font-size:12px;color:var(--text2);margin-bottom:12px"></div>
 
-        <div class="card">
-          <div style="font-size:14px;font-weight:600;margin-bottom:14px">Content Organization</div>
-          <div class="grid3">
+          <!-- File chooser -->
+          <div style="border:2px dashed var(--border2);border-radius:12px;padding:24px;text-align:center;margin-bottom:14px" 
+               ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" 
+               ondragleave="this.style.borderColor=''"
+               ondrop="event.preventDefault();if(event.dataTransfer.files[0])uploadFile(event.dataTransfer.files[0])">
+            <div style="font-size:32px;margin-bottom:8px">📄</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">Drag & drop here</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:12px">PDF, Images, Word · Max 20MB</div>
+            <label for="pdf-upload-input" style="display:inline-block;padding:9px 20px;background:var(--accent);color:#fff;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer">📁 Browse File</label>
+            <input type="file" id="pdf-upload-input" accept=".pdf,.jpg,.png,.doc,.docx,.ppt,.pptx" style="display:none" onchange="if(this.files[0])uploadFile(this.files[0])">
+          </div>
+
+          <!-- Organize -->
+          <div class="grid3" style="margin-bottom:12px">
             <div class="form-group">
               <label class="form-label">Class</label>
-              <select class="form-input" id="up-class"><option value="11">Class 11</option><option value="12">Class 12</option><option value="10">Class 10</option><option value="9">Class 9</option></select>
+              <select class="form-input" id="up-class">
+                <option value="11">Class 11</option><option value="12">Class 12</option>
+                <option value="10">Class 10</option><option value="9">Class 9</option><option value="8">Class 8</option>
+              </select>
             </div>
             <div class="form-group">
               <label class="form-label">Subject</label>
-              <select class="form-input" id="up-subj"><option value="Biology">Biology</option><option value="Physics">Physics</option><option value="Chemistry">Chemistry</option><option value="Maths">Maths</option></select>
+              <select class="form-input" id="up-subj">
+                <option value="Biology">Biology</option><option value="Physics">Physics</option>
+                <option value="Chemistry">Chemistry</option><option value="Maths">Maths</option>
+              </select>
             </div>
             <div class="form-group">
               <label class="form-label">Chapter</label>
@@ -1088,13 +1092,45 @@ input,textarea,select{font-family:var(--ff2);color:inherit}
           </div>
           <div class="form-group">
             <label class="form-label">Title</label>
-            <input class="form-input" placeholder="e.g. Mitosis – Detailed Notes">
+            <input class="form-input" id="up-title" placeholder="e.g. Mitosis – Detailed Notes">
           </div>
-          <button class="btn btn-primary">Upload Content</button>
         </div>
-      </div>
 
-      <div id="t-tests" style="display:none">
+        <!-- GOOGLE DRIVE LINK -->
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:8px">📎 Add Google Drive Link</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Upload PDF to Google Drive → Share → Anyone with link → Copy → Paste below</div>
+          <div class="form-group">
+            <label class="form-label">Google Drive Link</label>
+            <input class="form-input" id="drive-link" placeholder="https://drive.google.com/file/d/...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Title</label>
+            <input class="form-input" id="drive-title" placeholder="e.g. Chapter 5 Notes">
+          </div>
+          <div class="grid3">
+            <div class="form-group">
+              <label class="form-label">Class</label>
+              <select class="form-input" id="drive-class">
+                <option value="11">Class 11</option><option value="12">Class 12</option><option value="10">Class 10</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Subject</label>
+              <select class="form-input" id="drive-subj">
+                <option value="Biology">Biology</option><option value="Physics">Physics</option>
+                <option value="Chemistry">Chemistry</option><option value="Maths">Maths</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Chapter</label>
+              <input class="form-input" id="drive-chapter" placeholder="e.g. Cell Division">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="saveDriveLink()">💾 Save Drive Link</button>
+          <div id="drive-status" style="font-size:12px;color:#51cf66;margin-top:8px;display:none">✅ Link saved!</div>
+        </div>
+            <div id="t-tests" style="display:none">
         <div class="card">
           <div style="font-size:14px;font-weight:600;margin-bottom:14px">Create New Test</div>
           <div class="grid2">
@@ -1659,7 +1695,9 @@ function sendAnnouncement(){
 
 // ── CLOUDINARY UPLOAD ──
 function uploadFile(f){
-  if(!f||!CU){alert('Please select a file.');return;}
+  if(!f){alert('Please select a file first.');return;}
+  // Upload works even without login check - Cloudinary handles auth
+  var isCU = CU !== null;
   var t=document.getElementById('up-title')?document.getElementById('up-title').value.trim()||f.name:f.name;
   var subj=document.getElementById('up-subj')?document.getElementById('up-subj').value:'General';
   var cls=document.getElementById('up-class')?document.getElementById('up-class').value:'';
@@ -1672,13 +1710,23 @@ function uploadFile(f){
 
   if(pb)pb.style.display='block';
   if(st){st.textContent='Uploading to Cloudinary...';st.style.color='#4f7dff';}
+  console.log('Starting upload to Cloudinary:', f.name, f.size, 'bytes');
 
   var fd=new FormData();
   fd.append('file',f);
   fd.append('upload_preset',PRESET);
 
   var xhr=new XMLHttpRequest();
-  xhr.open('POST','https://api.cloudinary.com/v1_1/'+CLOUD+'/auto/upload');
+  // Use correct Cloudinary endpoint based on file type
+  var endpoint;
+  if(f.type && f.type.includes('video')) {
+    endpoint = 'https://api.cloudinary.com/v1_1/'+CLOUD+'/video/upload';
+  } else if(f.type && (f.type.includes('pdf') || f.name.toLowerCase().endsWith('.pdf'))) {
+    endpoint = 'https://api.cloudinary.com/v1_1/'+CLOUD+'/raw/upload';
+  } else {
+    endpoint = 'https://api.cloudinary.com/v1_1/'+CLOUD+'/image/upload';
+  }
+  xhr.open('POST', endpoint);
 
   xhr.upload.onprogress=function(e){
     if(e.lengthComputable&&pbf){
@@ -1696,7 +1744,8 @@ function uploadFile(f){
         title:t,subject:subj,class:cls,chapter:ch,
         fileUrl:url,
         type:f.type&&f.type.includes('video')?'video':'pdf',
-        uploadedBy:CU.uid,uploaderName:UD.name||'Teacher',
+        uploadedBy:CU?CU.uid:'teacher',
+        uploaderName:UD?UD.name||'Teacher':'Teacher',
         timestamp:firebase.firestore.FieldValue.serverTimestamp()
       }).then(function(){
         if(st){st.textContent='✅ '+t+' uploaded!';st.style.color='#51cf66';}
@@ -1723,27 +1772,28 @@ function uploadFile(f){
 
 // ── GOOGLE DRIVE LINK ──
 function saveDriveLink(){
-  if(!CU)return;
-  var url=document.getElementById('ext-link')?document.getElementById('ext-link').value.trim():'';
-  var t=document.getElementById('up-title')?document.getElementById('up-title').value.trim()||'Resource':'Resource';
+  var url=document.getElementById('drive-link')?document.getElementById('drive-link').value.trim():'';
+  var t=document.getElementById('drive-title')?document.getElementById('drive-title').value.trim()||'Resource':'Resource';
+  var subj=document.getElementById('drive-subj')?document.getElementById('drive-subj').value:'General';
+  var cls=document.getElementById('drive-class')?document.getElementById('drive-class').value:'';
+  var ch=document.getElementById('drive-chapter')?document.getElementById('drive-chapter').value:'General';
   if(!url){alert('Please paste a Google Drive link.');return;}
-  // Convert Google Drive share link to embed link
   if(url.includes('drive.google.com')){
     var match=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
     if(match)url='https://drive.google.com/file/d/'+match[1]+'/view';
   }
   db.collection('content').add({
-    title:t,
-    subject:document.getElementById('up-subj')?document.getElementById('up-subj').value:'General',
-    class:document.getElementById('up-class')?document.getElementById('up-class').value:'',
-    chapter:document.getElementById('up-chapter')?document.getElementById('up-chapter').value:'General',
-    fileUrl:url,type:'pdf',
-    uploadedBy:CU.uid,uploaderName:UD.name||'Teacher',
+    title:t, subject:subj, class:cls, chapter:ch,
+    fileUrl:url, type:'pdf',
+    uploadedBy:CU?CU.uid:'teacher',
+    uploaderName:UD?UD.name||'Teacher':'Teacher',
     timestamp:firebase.firestore.FieldValue.serverTimestamp()
   }).then(function(){
-    alert('✅ Link saved! Students can now access it.');
-    if(document.getElementById('ext-link'))document.getElementById('ext-link').value='';
-    if(document.getElementById('up-title'))document.getElementById('up-title').value='';
+    var st=document.getElementById('drive-status');
+    if(st){st.style.display='block';setTimeout(function(){st.style.display='none';},3000);}
+    document.getElementById('drive-link').value='';
+    document.getElementById('drive-title').value='';
+    alert('✅ Drive link saved! Students can now access it.');
   }).catch(function(e){alert('Error: '+e.message);});
 }
 
