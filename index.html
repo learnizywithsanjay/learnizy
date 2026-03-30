@@ -1717,24 +1717,43 @@ function doSignup(){
   var e=document.getElementById('s-email').value.trim();
   var p=document.getElementById('s-pass').value;
   var c=document.getElementById('s-cls').value;
-  if(!n||!e||!p){showAuthMsg('Please fill all fields.','err');return;}
+  
+  if(!n){showAuthMsg('Please enter your full name.','err');return;}
+  if(!e){showAuthMsg('Please enter your email.','err');return;}
+  if(!p){showAuthMsg('Please enter a password.','err');return;}
   if(authRole==='student'&&!c){showAuthMsg('Please select your class.','err');return;}
-  if(p.length<6){showAuthMsg('Password min 6 characters.','err');return;}
+  if(p.length<6){showAuthMsg('Password must be at least 6 characters.','err');return;}
+  
   var btn=document.getElementById('signup-btn');
-  btn.disabled=true;btn.textContent='Creating account...';
+  btn.disabled=true;
+  btn.textContent='Creating account...';
+  showAuthMsg('Creating your account...','info');
+  
   auth.createUserWithEmailAndPassword(e,p)
     .then(function(cr){
       return Promise.all([
         cr.user.updateProfile({displayName:n}),
         db.collection('users').doc(cr.user.uid).set({
-          name:n,email:e,role:authRole,class:c||'',
-          xp:0,streak:0,testsTaken:0,chaptersCompleted:0,
+          name:n, email:e, role:authRole, class:c||'',
+          xp:0, streak:0, testsTaken:0, chaptersCompleted:0,
           createdAt:firebase.firestore.FieldValue.serverTimestamp()
         })
       ]);
     })
-    .then(function(){showAuthMsg('Account created! Logging you in...','ok');})
-    .catch(function(err){showAuthMsg(err.message,'err');btn.disabled=false;btn.textContent='Create Account →';});
+    .then(function(){
+      showAuthMsg('✅ Account created! Logging you in...','ok');
+    })
+    .catch(function(err){
+      var msgs = {
+        'auth/email-already-in-use':'This email is already registered. Please login instead.',
+        'auth/invalid-email':'Please enter a valid email address.',
+        'auth/weak-password':'Password is too weak. Use at least 6 characters.',
+        'auth/network-request-failed':'No internet connection. Please check and try again.'
+      };
+      showAuthMsg(msgs[err.code]||err.message,'err');
+      btn.disabled=false;
+      btn.textContent='Create Account →';
+    });
 }
 
 // ── ANNOUNCEMENTS ──
