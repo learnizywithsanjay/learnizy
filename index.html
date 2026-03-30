@@ -627,11 +627,13 @@ input,textarea,select{font-family:var(--ff2);color:inherit}
           <div id="chapter-title" style="font-size:16px;font-weight:700"></div>
         </div>
         <div class="tabs">
-          <div class="tab active" onclick="switchTab(this,'notes')">📄 Notes</div>
-          <div class="tab" onclick="switchTab(this,'formulas')">📐 Formulas</div>
-          <div class="tab" onclick="switchTab(this,'concepts')">💡 Concepts</div>
+          <div class="tab active" onclick="showChapterList()">📖 Chapters</div>
+          <div class="tab" onclick="showAllSubjectNotes()">📄 All Notes</div>
         </div>
         <div id="chapter-list"></div>
+        <div id="notes-section" style="margin-top:12px">
+          <div id="notes-list"></div>
+        </div>
       </div>
     </div>
 
@@ -1372,25 +1374,94 @@ const subjectChapters = {
 const colorMap = { physics:'phy', chemistry:'che', biology:'bio', maths:'mat' };
 
 function showChapters(subj) {
+  window._currentSubj = subj;
   document.getElementById('chapter-section').style.display = 'block';
+  document.getElementById('chapter-list').style.display = '';
+  document.getElementById('notes-section').style.display = 'none';
   const colors = { physics:'#ff6b6b', chemistry:'#ffa94d', biology:'#51cf66', maths:'#4dabf7' };
-  document.getElementById('chapter-title').innerHTML = `<span style="color:${colors[subj]}">${subj.charAt(0).toUpperCase()+subj.slice(1)}</span> – Class 11`;
+  const subjLabel = subj.charAt(0).toUpperCase()+subj.slice(1);
+  document.getElementById('chapter-title').innerHTML = '<span style="color:'+colors[subj]+'">'+subjLabel+'</span> – Class 11';
   const chapters = subjectChapters[subj];
   const cls = colorMap[subj];
-  document.getElementById('chapter-list').innerHTML = chapters.map((ch, i) => {
-    const prog = Math.floor(Math.random() * 100);
-    return `<div class="chapter-item" onclick="showPage('practice',null)">
-      <div class="chapter-num" style="background:var(--${cls}-bg);color:var(--${cls});border:1px solid var(--${cls}-border)">${i+1}</div>
-      <div class="chapter-info">
-        <div class="chapter-name">${ch}</div>
-        <div class="chapter-meta">12 notes · 8 videos · 45 questions</div>
-        <div class="prog-bar" style="margin-top:6px"><div class="prog-fill ${cls}" style="width:${prog}%"></div></div>
-      </div>
-      <div class="chapter-prog">${prog}%</div>
-    </div>`;
+  document.getElementById('chapter-list').innerHTML = chapters.map(function(ch, i) {
+    return '<div class="chapter-item" onclick="loadChapterNotes(''+subj+'',''+ch+'',''+cls+'')" style="cursor:pointer">'+
+      '<div class="chapter-num" style="background:var(--'+cls+'-bg);color:var(--'+cls+');border:1px solid var(--'+cls+'-border)">'+(i+1)+'</div>'+
+      '<div class="chapter-info">'+
+        '<div class="chapter-name">'+ch+'</div>'+
+        '<div class="chapter-meta">Tap to see notes & PDFs</div>'+
+      '</div>'+
+      '<span style="color:var(--text3);font-size:18px">›</span>'+
+    '</div>';
   }).join('');
   document.getElementById('chapter-section').scrollIntoView({behavior:'smooth'});
+  // Also load all notes for this subject
+  loadAllNotesForSubject(window._currentSubj);
 }
+
+function loadChapterNotes(subj, chapter, cls) {
+  var notesSection = document.getElementById('notes-section');
+  var notesList = document.getElementById('notes-list');
+  notesSection.style.display = 'block';
+  notesList.innerHTML = '<div style="font-size:13px;color:var(--text2);padding:10px">Loading notes for '+chapter+'...</div>';
+  notesSection.scrollIntoView({behavior:'smooth'});
+
+  // Load from Firebase
+  db.collection('content')
+    .where('subject','==',subj)
+    .where('chapter','==',chapter)
+    .get()
+    .then(function(snap) {
+      if(snap.empty) {
+        notesList.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">'+
+          '<div style="font-size:24px;margin-bottom:8px">📭</div>'+
+          '<div style="font-size:13px;font-weight:600;margin-bottom:4px">No notes for '+chapter+' yet</div>'+
+          '<div style="font-size:12px;color:var(--text2)">Ask your teacher to upload notes for this chapter</div>'+
+        '</div>';
+        return;
+      }
+      notesList.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">'+chapter+' – Notes & Files ('+snap.size+')</div>'+
+        snap.docs.map(function(d) {
+          var f = d.data();
+          var isVideo = f.type === 'video';
+          var icon = isVideo ? '🎥' : '📄';
+          return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px">'+
+            '<div style="font-size:24px">'+icon+'</div>'+
+            '<div style="flex:1">'+
+              '<div style="font-size:13px;font-weight:600;margin-bottom:2px">'+(f.title||'Untitled')+'</div>'+
+              '<div style="font-size:11px;color:var(--text2)">Uploaded by '+(f.uploaderName||'Teacher')+'</div>'+
+            '</div>'+
+            '<div style="display:flex;gap:6px">'+
+              '<button onclick="viewFile(''+f.fileUrl+'')" style="padding:6px 12px;border-radius:999px;background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent);font-size:11px;font-weight:600;cursor:pointer">👁 View</button>'+
+              '<button onclick="downloadFile(''+f.fileUrl+'',''+( f.title||'file')+'')" style="padding:6px 12px;border-radius:999px;background:rgba(81,207,102,.1);color:#51cf66;border:1px solid rgba(81,207,102,.3);font-size:11px;font-weight:600;cursor:pointer">⬇ Save</button>'+
+            '</div>'+
+          '</div>';
+        }).join('');
+    })
+    .catch(function(e) {
+      notesList.innerHTML = '<div style="font-size:13px;color:var(--text2)">Error loading notes: '+e.message+'</div>';
+    });
+}
+
+function viewFile(url) {
+  if(!url) return;
+  window.open(url, '_blank');
+}
+
+function downloadFile(url, title) {
+  if(!url) return;
+  var a = document.createElement('a');
+  if(url.includes('cloudinary.com')) {
+    a.href = url.replace('/upload/', '/upload/fl_attachment/');
+  } else {
+    a.href = url;
+  }
+  a.download = title || 'file';
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 
 function selectClass(el, cls) {
   document.querySelectorAll('.class-pill').forEach(p => p.classList.remove('active'));
@@ -1845,6 +1916,61 @@ function saveQuestion(){
   }).catch(function(e){alert('Error: '+e.message);});
 }
 
+
+var _currentSubj = '';
+
+function showChapterList() {
+  document.getElementById('chapter-list').style.display = '';
+  document.getElementById('notes-section').style.display = 'none';
+}
+
+function showAllSubjectNotes() {
+  document.getElementById('chapter-list').style.display = 'none';
+  document.getElementById('notes-section').style.display = 'block';
+  loadAllNotesForSubject(window._currentSubj);
+}
+
+function loadAllNotesForSubject(subj) {
+  if(!subj) return;
+  var notesList = document.getElementById('notes-list');
+  notesList.innerHTML = '<div style="font-size:13px;color:var(--text2);padding:10px">Loading all '+subj+' notes...</div>';
+
+  // Capitalize first letter to match Firestore
+  var subjKey = subj.charAt(0).toUpperCase() + subj.slice(1);
+  
+  db.collection('content')
+    .where('subject','==',subjKey)
+    .get()
+    .then(function(snap) {
+      if(snap.empty) {
+        notesList.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center">'+
+          '<div style="font-size:28px;margin-bottom:8px">📭</div>'+
+          '<div style="font-size:13px;font-weight:600;margin-bottom:4px">No notes uploaded yet</div>'+
+          '<div style="font-size:12px;color:var(--text2)">Ask your teacher to upload notes for '+subjKey+'</div>'+
+        '</div>';
+        return;
+      }
+      notesList.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">'+subjKey+' – All Notes ('+snap.size+')</div>'+
+        snap.docs.map(function(d) {
+          var f = d.data();
+          var isVideo = f.type === 'video';
+          return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px">'+
+            '<div style="font-size:24px">'+(isVideo?'🎥':'📄')+'</div>'+
+            '<div style="flex:1">'+
+              '<div style="font-size:13px;font-weight:600;margin-bottom:2px">'+(f.title||'Untitled')+'</div>'+
+              '<div style="font-size:11px;color:var(--text2)">'+(f.chapter||'General')+(f.class?' · Class '+f.class:'')+'</div>'+
+            '</div>'+
+            '<div style="display:flex;gap:6px;flex-shrink:0">'+
+              '<button onclick="viewFile(''+f.fileUrl+'')" style="padding:6px 10px;border-radius:999px;background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent);font-size:11px;font-weight:600;cursor:pointer">👁 View</button>'+
+              '<button onclick="downloadFile(''+f.fileUrl+'',''+( f.title||'file')+'')" style="padding:6px 10px;border-radius:999px;background:rgba(81,207,102,.1);color:#51cf66;border:1px solid rgba(81,207,102,.3);font-size:11px;font-weight:600;cursor:pointer">⬇ Save</button>'+
+            '</div>'+
+          '</div>';
+        }).join('');
+    })
+    .catch(function(e) {
+      notesList.innerHTML = '<div style="font-size:13px;color:var(--text2)">Error: '+e.message+'</div>';
+    });
+}
 </script>
 </body>
 </html>
