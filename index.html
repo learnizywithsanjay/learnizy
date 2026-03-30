@@ -18,6 +18,369 @@ firebase.initializeApp({
 });
 var auth=firebase.auth(), db=firebase.firestore();
 var CLOUD='dbc05eahf', PRESET='gwc2kqyd';
+
+
+// ════════════════════════════════════
+// FIREBASE + CLOUDINARY - LEARNIZY
+// ════════════════════════════════════
+var CU=null, UD=null, authRole='student';
+
+auth.onAuthStateChanged(function(u){
+  if(u){
+    CU=u;
+    db.collection('users').doc(u.uid).get().then(function(snap){
+      var data=snap.data();
+      UD = data || {name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
+      bootApp();
+    }).catch(function(){
+      UD={name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
+      bootApp();
+    });
+  } else {
+    document.getElementById('auth-screen').className='';
+  }
+});
+
+function bootApp(){
+  document.getElementById('auth-screen').className='off';
+  var name=UD.name||CU.displayName||'User';
+  // Update home greeting
+  var hn=document.getElementById('home-name');
+  if(hn)hn.textContent=name;
+  var hc=document.getElementById('home-class');
+  if(hc)hc.textContent=(UD.class||'')+(UD.class?' · ':'')+'Learnizy';
+  // Update avatar
+  var av=document.querySelector('.icon-btn[title="Profile"]');
+  if(av){var ini=name.split(' ').map(function(n){return n[0];}).join('').slice(0,2).toUpperCase();av.textContent=ini;av.style.fontSize='12px';av.style.fontWeight='700';}
+  // Show teacher nav
+  var tni=document.getElementById('teacher-nav-item');
+  if(tni)tni.style.display=UD.role==='teacher'?'':'none';
+  // Load data
+  loadAnnouncements();
+}
+
+function doLogout(){auth.signOut();}
+
+function switchAuthTab(t){
+  document.getElementById('atab-l').className='atab'+(t==='login'?' on':'');
+  document.getElementById('atab-s').className='atab'+(t==='signup'?' on':'');
+  document.getElementById('sec-login').style.display=t==='login'?'':'none';
+  document.getElementById('sec-signup').style.display=t==='signup'?'':'none';
+  document.getElementById('amsg').style.display='none';
+}
+
+function setAuthRole(r){
+  authRole=r;
+  document.getElementById('r-stu').className='arbtn'+(r==='student'?' on':'');
+  document.getElementById('r-tea').className='arbtn'+(r==='teacher'?' on':'');
+  document.getElementById('cls-wrap').style.display=r==='student'?'':'none';
+}
+
+function showAuthMsg(txt,type){
+  var el=document.getElementById('amsg');
+  el.textContent=txt;el.className='amsg '+type;el.style.display='block';
+}
+
+function doLogin(){
+  var e=document.getElementById('l-email').value.trim();
+  var p=document.getElementById('l-pass').value;
+  if(!e||!p){showAuthMsg('Please enter email and password.','err');return;}
+  var btn=document.getElementById('login-btn');
+  btn.disabled=true;btn.textContent='Logging in...';
+  showAuthMsg('Connecting...','info');
+  auth.signInWithEmailAndPassword(e,p)
+    .then(function(){document.getElementById('amsg').style.display='none';})
+    .catch(function(err){
+      var msgs={'auth/user-not-found':'No account with this email.','auth/wrong-password':'Wrong password.','auth/invalid-credential':'Wrong email or password.','auth/network-request-failed':'No internet.'};
+      showAuthMsg(msgs[err.code]||err.message,'err');
+      btn.disabled=false;btn.textContent='Login →';
+    });
+}
+
+function doSignup(){
+  var n=document.getElementById('s-name').value.trim();
+  var e=document.getElementById('s-email').value.trim();
+  var p=document.getElementById('s-pass').value;
+  var c=document.getElementById('s-cls').value;
+  
+  if(!n){showAuthMsg('Please enter your full name.','err');return;}
+  if(!e){showAuthMsg('Please enter your email.','err');return;}
+  if(!p){showAuthMsg('Please enter a password.','err');return;}
+  if(authRole==='student'&&!c){showAuthMsg('Please select your class.','err');return;}
+  if(p.length<6){showAuthMsg('Password must be at least 6 characters.','err');return;}
+  
+  var btn=document.getElementById('signup-btn');
+  btn.disabled=true;
+  btn.textContent='Creating account...';
+  showAuthMsg('Creating your account...','info');
+  
+  auth.createUserWithEmailAndPassword(e,p)
+    .then(function(cr){
+      return Promise.all([
+        cr.user.updateProfile({displayName:n}),
+        db.collection('users').doc(cr.user.uid).set({
+          name:n, email:e, role:authRole, class:c||'',
+          xp:0, streak:0, testsTaken:0, chaptersCompleted:0,
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        })
+      ]);
+    })
+    .then(function(){
+      showAuthMsg('✅ Account created! Logging you in...','ok');
+    })
+    .catch(function(err){
+      var msgs = {
+        'auth/email-already-in-use':'This email is already registered. Please login instead.',
+        'auth/invalid-email':'Please enter a valid email address.',
+        'auth/weak-password':'Password is too weak. Use at least 6 characters.',
+        'auth/network-request-failed':'No internet connection. Please check and try again.'
+      };
+      showAuthMsg(msgs[err.code]||err.message,'err');
+      btn.disabled=false;
+      btn.textContent='Create Account →';
+    });
+}
+
+// ── ANNOUNCEMENTS ──
+function loadAnnouncements(){
+  if(!CU)return;
+  db.collection('announcements').orderBy('createdAt','desc').limit(5).get()
+    .then(function(snap){
+      var el=document.getElementById('recent-activity');
+      if(!el)return;
+      if(snap.empty){el.innerHTML='<div style="font-size:13px;color:var(--text2)">No announcements yet.</div>';return;}
+      el.innerHTML=snap.docs.map(function(d){
+        var a=d.data();
+        return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span>📢 '+a.title+': '+a.message+'</span><span style="font-size:11px;color:var(--text3)">'+a.sentBy+'</span></div>';
+      }).join('');
+    }).catch(function(){});
+}
+
+function sendAnnouncement(){
+  if(!CU)return;
+  var title=document.getElementById('ann-title')?document.getElementById('ann-title').value.trim():'';
+  var msg=document.getElementById('ann-msg')?document.getElementById('ann-msg').value.trim():'';
+  if(!title||!msg){alert('Fill title and message.');return;}
+  db.collection('announcements').add({
+    title:title,message:msg,sentBy:UD.name||'Teacher',
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    if(document.getElementById('ann-title'))document.getElementById('ann-title').value='';
+    if(document.getElementById('ann-msg'))document.getElementById('ann-msg').value='';
+    alert('✅ Announcement sent to all students!');
+    loadAnnouncements();
+  }).catch(function(e){alert('Error: '+e.message);});
+}
+
+// ── CLOUDINARY UPLOAD ──
+function uploadFile(f){
+  if(!f){alert('Please select a file first.');return;}
+  // Upload works even without login check - Cloudinary handles auth
+  var isCU = CU !== null;
+  var t=document.getElementById('up-title')?document.getElementById('up-title').value.trim()||f.name:f.name;
+  var subj=document.getElementById('up-subj')?document.getElementById('up-subj').value:'General';
+  var cls=document.getElementById('up-class')?document.getElementById('up-class').value:'';
+  var ch=document.getElementById('up-chapter')?document.getElementById('up-chapter').value||'General':'General';
+  var pb=document.getElementById('up-prog-bar');
+  var pbf=document.getElementById('up-prog-fill');
+  var st=document.getElementById('up-status');
+
+  if(f.size>20*1024*1024){if(st){st.textContent='❌ File too large. Max 20MB.';st.style.color='#ff6b6b';}return;}
+
+  if(pb)pb.style.display='block';
+  if(st){st.textContent='Uploading to Cloudinary...';st.style.color='#4f7dff';}
+  console.log('Starting upload to Cloudinary:', f.name, f.size, 'bytes');
+
+  var fd=new FormData();
+  fd.append('file',f);
+  fd.append('upload_preset',PRESET);
+
+  var xhr=new XMLHttpRequest();
+  // Use correct Cloudinary endpoint based on file type
+  var endpoint;
+  if(f.type && f.type.includes('video')) {
+    endpoint = 'https://api.cloudinary.com/v1_1/'+CLOUD+'/video/upload';
+  } else if(f.type && (f.type.includes('pdf') || f.name.toLowerCase().endsWith('.pdf'))) {
+    endpoint = 'https://api.cloudinary.com/v1_1/'+CLOUD+'/raw/upload';
+  } else {
+    endpoint = 'https://api.cloudinary.com/v1_1/'+CLOUD+'/image/upload';
+  }
+  xhr.open('POST', endpoint);
+
+  xhr.upload.onprogress=function(e){
+    if(e.lengthComputable&&pbf){
+      var p=Math.round(e.loaded/e.total*100);
+      pbf.style.width=p+'%';
+      if(st)st.textContent='Uploading... '+p+'%';
+    }
+  };
+
+  xhr.onload=function(){
+    if(xhr.status===200){
+      var res=JSON.parse(xhr.responseText);
+      var url=res.secure_url;
+      db.collection('content').add({
+        title:t,subject:subj,class:cls,chapter:ch,
+        fileUrl:url,
+        type:f.type&&f.type.includes('video')?'video':'pdf',
+        uploadedBy:CU?CU.uid:'teacher',
+        uploaderName:UD?UD.name||'Teacher':'Teacher',
+        timestamp:firebase.firestore.FieldValue.serverTimestamp()
+      }).then(function(){
+        if(st){st.textContent='✅ '+t+' uploaded!';st.style.color='#51cf66';}
+        if(pbf)pbf.style.width='100%';
+        alert('✅ '+t+' uploaded successfully! Students can now access it.');
+        if(document.getElementById('up-title'))document.getElementById('up-title').value='';
+        if(document.getElementById('up-chapter'))document.getElementById('up-chapter').value='';
+        if(document.getElementById('pdf-upload-input'))document.getElementById('pdf-upload-input').value='';
+        if(document.getElementById('vid-upload-input'))document.getElementById('vid-upload-input').value='';
+      }).catch(function(e){if(st){st.textContent='❌ Save error: '+e.message;st.style.color='#ff6b6b';}});
+    } else {
+      if(st){st.textContent='❌ Upload failed. Try again.';st.style.color='#ff6b6b';}
+      if(pb)pb.style.display='none';
+    }
+  };
+
+  xhr.onerror=function(){
+    if(st){st.textContent='❌ Network error.';st.style.color='#ff6b6b';}
+    if(pb)pb.style.display='none';
+  };
+
+  xhr.send(fd);
+}
+
+// ── GOOGLE DRIVE LINK ──
+function saveDriveLink(){
+  var url=document.getElementById('drive-link')?document.getElementById('drive-link').value.trim():'';
+  var t=document.getElementById('drive-title')?document.getElementById('drive-title').value.trim()||'Resource':'Resource';
+  var subj=document.getElementById('drive-subj')?document.getElementById('drive-subj').value:'General';
+  var cls=document.getElementById('drive-class')?document.getElementById('drive-class').value:'';
+  var ch=document.getElementById('drive-chapter')?document.getElementById('drive-chapter').value:'General';
+  if(!url){alert('Please paste a Google Drive link.');return;}
+  if(url.includes('drive.google.com')){
+    var match=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if(match)url='https://drive.google.com/file/d/'+match[1]+'/view';
+  }
+  db.collection('content').add({
+    title:t, subject:subj, class:cls, chapter:ch,
+    fileUrl:url, type:'pdf',
+    uploadedBy:CU?CU.uid:'teacher',
+    uploaderName:UD?UD.name||'Teacher':'Teacher',
+    timestamp:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    var st=document.getElementById('drive-status');
+    if(st){st.style.display='block';setTimeout(function(){st.style.display='none';},3000);}
+    document.getElementById('drive-link').value='';
+    document.getElementById('drive-title').value='';
+    alert('✅ Drive link saved! Students can now access it.');
+  }).catch(function(e){alert('Error: '+e.message);});
+}
+
+// ── VIEW & DOWNLOAD FILES ──
+function viewFile(url){
+  if(!url)return;
+  window.open(url,'_blank');
+}
+
+function downloadFile(url,title){
+  if(!url)return;
+  var a=document.createElement('a');
+  // For Cloudinary - add fl_attachment for direct download
+  if(url.includes('cloudinary.com')){
+    a.href=url.replace('/upload/','/upload/fl_attachment/');
+  } else {
+    a.href=url;
+  }
+  a.download=title||'file';
+  a.target='_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ── SAVE QUESTION ──
+function saveQuestion(){
+  if(!CU)return;
+  var q=document.getElementById('q-text')?document.getElementById('q-text').value.trim():'';
+  if(!q){alert('Enter question text.');return;}
+  db.collection('questions').add({
+    question:q,
+    optA:document.getElementById('q-a')?document.getElementById('q-a').value.trim():'',
+    optB:document.getElementById('q-b')?document.getElementById('q-b').value.trim():'',
+    optC:document.getElementById('q-c')?document.getElementById('q-c').value.trim():'',
+    optD:document.getElementById('q-d')?document.getElementById('q-d').value.trim():'',
+    correct:parseInt(document.getElementById('q-ans')?document.getElementById('q-ans').value:'0'),
+    explanation:document.getElementById('q-expl')?document.getElementById('q-expl').value.trim():'',
+    subject:document.getElementById('q-subj')?document.getElementById('q-subj').value:'Biology',
+    difficulty:document.getElementById('q-diff')?document.getElementById('q-diff').value:'medium',
+    chapter:document.getElementById('q-ch')?document.getElementById('q-ch').value.trim():'',
+    createdBy:CU.uid,
+    timestamp:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    ['q-text','q-a','q-b','q-c','q-d','q-expl','q-ch'].forEach(function(id){
+      var el=document.getElementById(id);if(el)el.value='';
+    });
+    alert('✅ Question saved to question bank!');
+  }).catch(function(e){alert('Error: '+e.message);});
+}
+
+
+var _currentSubj = '';
+
+function showChapterList() {
+  document.getElementById('chapter-list').style.display = '';
+  document.getElementById('notes-section').style.display = 'none';
+}
+
+function showAllSubjectNotes() {
+  document.getElementById('chapter-list').style.display = 'none';
+  document.getElementById('notes-section').style.display = 'block';
+  loadAllNotesForSubject(window._currentSubj);
+}
+
+function loadAllNotesForSubject(subj) {
+  if(!subj) return;
+  var notesList = document.getElementById('notes-list');
+  notesList.innerHTML = '<div style="font-size:13px;color:var(--text2);padding:10px">Loading all '+subj+' notes...</div>';
+
+  // Capitalize first letter to match Firestore
+  var subjKey = subj.charAt(0).toUpperCase() + subj.slice(1);
+  
+  db.collection('content')
+    .where('subject','==',subjKey)
+    .get()
+    .then(function(snap) {
+      if(snap.empty) {
+        notesList.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center">'+
+          '<div style="font-size:28px;margin-bottom:8px">📭</div>'+
+          '<div style="font-size:13px;font-weight:600;margin-bottom:4px">No notes uploaded yet</div>'+
+          '<div style="font-size:12px;color:var(--text2)">Ask your teacher to upload notes for '+subjKey+'</div>'+
+        '</div>';
+        return;
+      }
+      notesList.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">'+subjKey+' – All Notes ('+snap.size+')</div>'+
+        snap.docs.map(function(d) {
+          var f = d.data();
+          var isVideo = f.type === 'video';
+          return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px">'+
+            '<div style="font-size:24px">'+(isVideo?'🎥':'📄')+'</div>'+
+            '<div style="flex:1">'+
+              '<div style="font-size:13px;font-weight:600;margin-bottom:2px">'+(f.title||'Untitled')+'</div>'+
+              '<div style="font-size:11px;color:var(--text2)">'+(f.chapter||'General')+(f.class?' · Class '+f.class:'')+'</div>'+
+            '</div>'+
+            '<div style="display:flex;gap:6px;flex-shrink:0">'+
+              '<button onclick="viewFile(''+f.fileUrl+'')" style="padding:6px 10px;border-radius:999px;background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent);font-size:11px;font-weight:600;cursor:pointer">👁 View</button>'+
+              '<button onclick="downloadFile(''+f.fileUrl+'',''+( f.title||'file')+'')" style="padding:6px 10px;border-radius:999px;background:rgba(81,207,102,.1);color:#51cf66;border:1px solid rgba(81,207,102,.3);font-size:11px;font-weight:600;cursor:pointer">⬇ Save</button>'+
+            '</div>'+
+          '</div>';
+        }).join('');
+    })
+    .catch(function(e) {
+      notesList.innerHTML = '<div style="font-size:13px;color:var(--text2)">Error: '+e.message+'</div>';
+    });
+}
+
+
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
@@ -1633,369 +1996,7 @@ setTimeout(() => {
 
 </script>
 
-<script>
 
-// ════════════════════════════════════
-// FIREBASE + CLOUDINARY - LEARNIZY
-// ════════════════════════════════════
-var CU=null, UD=null, authRole='student';
-
-auth.onAuthStateChanged(function(u){
-  if(u){
-    CU=u;
-    db.collection('users').doc(u.uid).get().then(function(snap){
-      var data=snap.data();
-      UD = data || {name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
-      bootApp();
-    }).catch(function(){
-      UD={name:u.displayName||'User',role:'student',class:'',xp:0,streak:0,testsTaken:0};
-      bootApp();
-    });
-  } else {
-    document.getElementById('auth-screen').className='';
-  }
-});
-
-function bootApp(){
-  document.getElementById('auth-screen').className='off';
-  var name=UD.name||CU.displayName||'User';
-  // Update home greeting
-  var hn=document.getElementById('home-name');
-  if(hn)hn.textContent=name;
-  var hc=document.getElementById('home-class');
-  if(hc)hc.textContent=(UD.class||'')+(UD.class?' · ':'')+'Learnizy';
-  // Update avatar
-  var av=document.querySelector('.icon-btn[title="Profile"]');
-  if(av){var ini=name.split(' ').map(function(n){return n[0];}).join('').slice(0,2).toUpperCase();av.textContent=ini;av.style.fontSize='12px';av.style.fontWeight='700';}
-  // Show teacher nav
-  var tni=document.getElementById('teacher-nav-item');
-  if(tni)tni.style.display=UD.role==='teacher'?'':'none';
-  // Load data
-  loadAnnouncements();
-}
-
-function doLogout(){auth.signOut();}
-
-function switchAuthTab(t){
-  document.getElementById('atab-l').className='atab'+(t==='login'?' on':'');
-  document.getElementById('atab-s').className='atab'+(t==='signup'?' on':'');
-  document.getElementById('sec-login').style.display=t==='login'?'':'none';
-  document.getElementById('sec-signup').style.display=t==='signup'?'':'none';
-  document.getElementById('amsg').style.display='none';
-}
-
-function setAuthRole(r){
-  authRole=r;
-  document.getElementById('r-stu').className='arbtn'+(r==='student'?' on':'');
-  document.getElementById('r-tea').className='arbtn'+(r==='teacher'?' on':'');
-  document.getElementById('cls-wrap').style.display=r==='student'?'':'none';
-}
-
-function showAuthMsg(txt,type){
-  var el=document.getElementById('amsg');
-  el.textContent=txt;el.className='amsg '+type;el.style.display='block';
-}
-
-function doLogin(){
-  var e=document.getElementById('l-email').value.trim();
-  var p=document.getElementById('l-pass').value;
-  if(!e||!p){showAuthMsg('Please enter email and password.','err');return;}
-  var btn=document.getElementById('login-btn');
-  btn.disabled=true;btn.textContent='Logging in...';
-  showAuthMsg('Connecting...','info');
-  auth.signInWithEmailAndPassword(e,p)
-    .then(function(){document.getElementById('amsg').style.display='none';})
-    .catch(function(err){
-      var msgs={'auth/user-not-found':'No account with this email.','auth/wrong-password':'Wrong password.','auth/invalid-credential':'Wrong email or password.','auth/network-request-failed':'No internet.'};
-      showAuthMsg(msgs[err.code]||err.message,'err');
-      btn.disabled=false;btn.textContent='Login →';
-    });
-}
-
-function doSignup(){
-  var n=document.getElementById('s-name').value.trim();
-  var e=document.getElementById('s-email').value.trim();
-  var p=document.getElementById('s-pass').value;
-  var c=document.getElementById('s-cls').value;
-  
-  if(!n){showAuthMsg('Please enter your full name.','err');return;}
-  if(!e){showAuthMsg('Please enter your email.','err');return;}
-  if(!p){showAuthMsg('Please enter a password.','err');return;}
-  if(authRole==='student'&&!c){showAuthMsg('Please select your class.','err');return;}
-  if(p.length<6){showAuthMsg('Password must be at least 6 characters.','err');return;}
-  
-  var btn=document.getElementById('signup-btn');
-  btn.disabled=true;
-  btn.textContent='Creating account...';
-  showAuthMsg('Creating your account...','info');
-  
-  auth.createUserWithEmailAndPassword(e,p)
-    .then(function(cr){
-      return Promise.all([
-        cr.user.updateProfile({displayName:n}),
-        db.collection('users').doc(cr.user.uid).set({
-          name:n, email:e, role:authRole, class:c||'',
-          xp:0, streak:0, testsTaken:0, chaptersCompleted:0,
-          createdAt:firebase.firestore.FieldValue.serverTimestamp()
-        })
-      ]);
-    })
-    .then(function(){
-      showAuthMsg('✅ Account created! Logging you in...','ok');
-    })
-    .catch(function(err){
-      var msgs = {
-        'auth/email-already-in-use':'This email is already registered. Please login instead.',
-        'auth/invalid-email':'Please enter a valid email address.',
-        'auth/weak-password':'Password is too weak. Use at least 6 characters.',
-        'auth/network-request-failed':'No internet connection. Please check and try again.'
-      };
-      showAuthMsg(msgs[err.code]||err.message,'err');
-      btn.disabled=false;
-      btn.textContent='Create Account →';
-    });
-}
-
-// ── ANNOUNCEMENTS ──
-function loadAnnouncements(){
-  if(!CU)return;
-  db.collection('announcements').orderBy('createdAt','desc').limit(5).get()
-    .then(function(snap){
-      var el=document.getElementById('recent-activity');
-      if(!el)return;
-      if(snap.empty){el.innerHTML='<div style="font-size:13px;color:var(--text2)">No announcements yet.</div>';return;}
-      el.innerHTML=snap.docs.map(function(d){
-        var a=d.data();
-        return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span>📢 '+a.title+': '+a.message+'</span><span style="font-size:11px;color:var(--text3)">'+a.sentBy+'</span></div>';
-      }).join('');
-    }).catch(function(){});
-}
-
-function sendAnnouncement(){
-  if(!CU)return;
-  var title=document.getElementById('ann-title')?document.getElementById('ann-title').value.trim():'';
-  var msg=document.getElementById('ann-msg')?document.getElementById('ann-msg').value.trim():'';
-  if(!title||!msg){alert('Fill title and message.');return;}
-  db.collection('announcements').add({
-    title:title,message:msg,sentBy:UD.name||'Teacher',
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function(){
-    if(document.getElementById('ann-title'))document.getElementById('ann-title').value='';
-    if(document.getElementById('ann-msg'))document.getElementById('ann-msg').value='';
-    alert('✅ Announcement sent to all students!');
-    loadAnnouncements();
-  }).catch(function(e){alert('Error: '+e.message);});
-}
-
-// ── CLOUDINARY UPLOAD ──
-function uploadFile(f){
-  if(!f){alert('Please select a file first.');return;}
-  // Upload works even without login check - Cloudinary handles auth
-  var isCU = CU !== null;
-  var t=document.getElementById('up-title')?document.getElementById('up-title').value.trim()||f.name:f.name;
-  var subj=document.getElementById('up-subj')?document.getElementById('up-subj').value:'General';
-  var cls=document.getElementById('up-class')?document.getElementById('up-class').value:'';
-  var ch=document.getElementById('up-chapter')?document.getElementById('up-chapter').value||'General':'General';
-  var pb=document.getElementById('up-prog-bar');
-  var pbf=document.getElementById('up-prog-fill');
-  var st=document.getElementById('up-status');
-
-  if(f.size>20*1024*1024){if(st){st.textContent='❌ File too large. Max 20MB.';st.style.color='#ff6b6b';}return;}
-
-  if(pb)pb.style.display='block';
-  if(st){st.textContent='Uploading to Cloudinary...';st.style.color='#4f7dff';}
-  console.log('Starting upload to Cloudinary:', f.name, f.size, 'bytes');
-
-  var fd=new FormData();
-  fd.append('file',f);
-  fd.append('upload_preset',PRESET);
-
-  var xhr=new XMLHttpRequest();
-  // Use correct Cloudinary endpoint based on file type
-  var endpoint;
-  if(f.type && f.type.includes('video')) {
-    endpoint = 'https://api.cloudinary.com/v1_1/'+CLOUD+'/video/upload';
-  } else if(f.type && (f.type.includes('pdf') || f.name.toLowerCase().endsWith('.pdf'))) {
-    endpoint = 'https://api.cloudinary.com/v1_1/'+CLOUD+'/raw/upload';
-  } else {
-    endpoint = 'https://api.cloudinary.com/v1_1/'+CLOUD+'/image/upload';
-  }
-  xhr.open('POST', endpoint);
-
-  xhr.upload.onprogress=function(e){
-    if(e.lengthComputable&&pbf){
-      var p=Math.round(e.loaded/e.total*100);
-      pbf.style.width=p+'%';
-      if(st)st.textContent='Uploading... '+p+'%';
-    }
-  };
-
-  xhr.onload=function(){
-    if(xhr.status===200){
-      var res=JSON.parse(xhr.responseText);
-      var url=res.secure_url;
-      db.collection('content').add({
-        title:t,subject:subj,class:cls,chapter:ch,
-        fileUrl:url,
-        type:f.type&&f.type.includes('video')?'video':'pdf',
-        uploadedBy:CU?CU.uid:'teacher',
-        uploaderName:UD?UD.name||'Teacher':'Teacher',
-        timestamp:firebase.firestore.FieldValue.serverTimestamp()
-      }).then(function(){
-        if(st){st.textContent='✅ '+t+' uploaded!';st.style.color='#51cf66';}
-        if(pbf)pbf.style.width='100%';
-        alert('✅ '+t+' uploaded successfully! Students can now access it.');
-        if(document.getElementById('up-title'))document.getElementById('up-title').value='';
-        if(document.getElementById('up-chapter'))document.getElementById('up-chapter').value='';
-        if(document.getElementById('pdf-upload-input'))document.getElementById('pdf-upload-input').value='';
-        if(document.getElementById('vid-upload-input'))document.getElementById('vid-upload-input').value='';
-      }).catch(function(e){if(st){st.textContent='❌ Save error: '+e.message;st.style.color='#ff6b6b';}});
-    } else {
-      if(st){st.textContent='❌ Upload failed. Try again.';st.style.color='#ff6b6b';}
-      if(pb)pb.style.display='none';
-    }
-  };
-
-  xhr.onerror=function(){
-    if(st){st.textContent='❌ Network error.';st.style.color='#ff6b6b';}
-    if(pb)pb.style.display='none';
-  };
-
-  xhr.send(fd);
-}
-
-// ── GOOGLE DRIVE LINK ──
-function saveDriveLink(){
-  var url=document.getElementById('drive-link')?document.getElementById('drive-link').value.trim():'';
-  var t=document.getElementById('drive-title')?document.getElementById('drive-title').value.trim()||'Resource':'Resource';
-  var subj=document.getElementById('drive-subj')?document.getElementById('drive-subj').value:'General';
-  var cls=document.getElementById('drive-class')?document.getElementById('drive-class').value:'';
-  var ch=document.getElementById('drive-chapter')?document.getElementById('drive-chapter').value:'General';
-  if(!url){alert('Please paste a Google Drive link.');return;}
-  if(url.includes('drive.google.com')){
-    var match=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-    if(match)url='https://drive.google.com/file/d/'+match[1]+'/view';
-  }
-  db.collection('content').add({
-    title:t, subject:subj, class:cls, chapter:ch,
-    fileUrl:url, type:'pdf',
-    uploadedBy:CU?CU.uid:'teacher',
-    uploaderName:UD?UD.name||'Teacher':'Teacher',
-    timestamp:firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function(){
-    var st=document.getElementById('drive-status');
-    if(st){st.style.display='block';setTimeout(function(){st.style.display='none';},3000);}
-    document.getElementById('drive-link').value='';
-    document.getElementById('drive-title').value='';
-    alert('✅ Drive link saved! Students can now access it.');
-  }).catch(function(e){alert('Error: '+e.message);});
-}
-
-// ── VIEW & DOWNLOAD FILES ──
-function viewFile(url){
-  if(!url)return;
-  window.open(url,'_blank');
-}
-
-function downloadFile(url,title){
-  if(!url)return;
-  var a=document.createElement('a');
-  // For Cloudinary - add fl_attachment for direct download
-  if(url.includes('cloudinary.com')){
-    a.href=url.replace('/upload/','/upload/fl_attachment/');
-  } else {
-    a.href=url;
-  }
-  a.download=title||'file';
-  a.target='_blank';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-// ── SAVE QUESTION ──
-function saveQuestion(){
-  if(!CU)return;
-  var q=document.getElementById('q-text')?document.getElementById('q-text').value.trim():'';
-  if(!q){alert('Enter question text.');return;}
-  db.collection('questions').add({
-    question:q,
-    optA:document.getElementById('q-a')?document.getElementById('q-a').value.trim():'',
-    optB:document.getElementById('q-b')?document.getElementById('q-b').value.trim():'',
-    optC:document.getElementById('q-c')?document.getElementById('q-c').value.trim():'',
-    optD:document.getElementById('q-d')?document.getElementById('q-d').value.trim():'',
-    correct:parseInt(document.getElementById('q-ans')?document.getElementById('q-ans').value:'0'),
-    explanation:document.getElementById('q-expl')?document.getElementById('q-expl').value.trim():'',
-    subject:document.getElementById('q-subj')?document.getElementById('q-subj').value:'Biology',
-    difficulty:document.getElementById('q-diff')?document.getElementById('q-diff').value:'medium',
-    chapter:document.getElementById('q-ch')?document.getElementById('q-ch').value.trim():'',
-    createdBy:CU.uid,
-    timestamp:firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function(){
-    ['q-text','q-a','q-b','q-c','q-d','q-expl','q-ch'].forEach(function(id){
-      var el=document.getElementById(id);if(el)el.value='';
-    });
-    alert('✅ Question saved to question bank!');
-  }).catch(function(e){alert('Error: '+e.message);});
-}
-
-
-var _currentSubj = '';
-
-function showChapterList() {
-  document.getElementById('chapter-list').style.display = '';
-  document.getElementById('notes-section').style.display = 'none';
-}
-
-function showAllSubjectNotes() {
-  document.getElementById('chapter-list').style.display = 'none';
-  document.getElementById('notes-section').style.display = 'block';
-  loadAllNotesForSubject(window._currentSubj);
-}
-
-function loadAllNotesForSubject(subj) {
-  if(!subj) return;
-  var notesList = document.getElementById('notes-list');
-  notesList.innerHTML = '<div style="font-size:13px;color:var(--text2);padding:10px">Loading all '+subj+' notes...</div>';
-
-  // Capitalize first letter to match Firestore
-  var subjKey = subj.charAt(0).toUpperCase() + subj.slice(1);
-  
-  db.collection('content')
-    .where('subject','==',subjKey)
-    .get()
-    .then(function(snap) {
-      if(snap.empty) {
-        notesList.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center">'+
-          '<div style="font-size:28px;margin-bottom:8px">📭</div>'+
-          '<div style="font-size:13px;font-weight:600;margin-bottom:4px">No notes uploaded yet</div>'+
-          '<div style="font-size:12px;color:var(--text2)">Ask your teacher to upload notes for '+subjKey+'</div>'+
-        '</div>';
-        return;
-      }
-      notesList.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">'+subjKey+' – All Notes ('+snap.size+')</div>'+
-        snap.docs.map(function(d) {
-          var f = d.data();
-          var isVideo = f.type === 'video';
-          return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px">'+
-            '<div style="font-size:24px">'+(isVideo?'🎥':'📄')+'</div>'+
-            '<div style="flex:1">'+
-              '<div style="font-size:13px;font-weight:600;margin-bottom:2px">'+(f.title||'Untitled')+'</div>'+
-              '<div style="font-size:11px;color:var(--text2)">'+(f.chapter||'General')+(f.class?' · Class '+f.class:'')+'</div>'+
-            '</div>'+
-            '<div style="display:flex;gap:6px;flex-shrink:0">'+
-              '<button onclick="viewFile(''+f.fileUrl+'')" style="padding:6px 10px;border-radius:999px;background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent);font-size:11px;font-weight:600;cursor:pointer">👁 View</button>'+
-              '<button onclick="downloadFile(''+f.fileUrl+'',''+( f.title||'file')+'')" style="padding:6px 10px;border-radius:999px;background:rgba(81,207,102,.1);color:#51cf66;border:1px solid rgba(81,207,102,.3);font-size:11px;font-weight:600;cursor:pointer">⬇ Save</button>'+
-            '</div>'+
-          '</div>';
-        }).join('');
-    })
-    .catch(function(e) {
-      notesList.innerHTML = '<div style="font-size:13px;color:var(--text2)">Error: '+e.message+'</div>';
-    });
-}
-
-</script>
 
 </body>
 </html>
